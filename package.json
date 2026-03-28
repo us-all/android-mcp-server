@@ -47,10 +47,10 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/thkim-us/android-mcp-server.git"
+    "url": "https://github.com/us-all/android-mcp-server.git"
   },
-  "homepage": "https://github.com/thkim-us/android-mcp-server#readme",
+  "homepage": "https://github.com/us-all/android-mcp-server#readme",
   "bugs": {
-    "url": "https://github.com/thkim-us/android-mcp-server/issues"
+    "url": "https://github.com/us-all/android-mcp-server/issues"
   }
 }
