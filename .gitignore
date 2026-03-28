@@ -3,3 +3,9 @@ dist/
 .env
 *.tgz
 .mcp.json
+
+# Test app build artifacts
+fixtures/test-app/.gradle/
+fixtures/test-app/build/
+fixtures/test-app/app/build/
+fixtures/test-app/local.properties

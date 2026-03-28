@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:padding="16dp">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:gravity="center_horizontal">
+
+        <!-- Title -->
+        <TextView
+            android:id="@+id/title"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="MCP Test App"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="App title" />
+
+        <!-- Status display -->
+        <TextView
+            android:id="@+id/status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ready"
+            android:textSize="16sp"
+            android:background="#E0E0E0"
+            android:padding="12dp"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="Status display" />
+
+        <!-- Text input -->
+        <EditText
+            android:id="@+id/textInput"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Type something here"
+            android:inputType="text"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Text input field" />
+
+        <!-- Basic button -->
+        <Button
+            android:id="@+id/btnTap"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Tap Me"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Tap test button" />
+
+        <!-- Counter button -->
+        <Button
+            android:id="@+id/btnCounter"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Counter: 0"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Counter button" />
+
+        <!-- Checkbox -->
+        <CheckBox
+            android:id="@+id/checkbox"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Check me"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Test checkbox" />
+
+        <!-- Toggle switch -->
+        <Switch
+            android:id="@+id/toggle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Toggle me"
+            android:layout_marginBottom="16dp"
+            android:contentDescription="Test toggle" />
+
+        <!-- Permission test -->
+        <Button
+            android:id="@+id/btnPermission"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Request Camera Permission"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Request camera permission" />
+
+        <!-- Deep link test -->
+        <Button
+            android:id="@+id/btnDeepLink"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Test Deep Link"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Test deep link" />
+
+        <!-- Broadcast test -->
+        <Button
+            android:id="@+id/btnBroadcast"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Send Broadcast"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Send test broadcast" />
+
+        <!-- Crash test -->
+        <Button
+            android:id="@+id/btnCrash"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Trigger Crash (NPE)"
+            android:backgroundTint="#FF5252"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="8dp"
+            android:contentDescription="Trigger crash button" />
+
+        <!-- Scrollable list items for scroll testing -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Scroll Test Items:"
+            android:textStyle="bold"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="8dp" />
+
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 1" android:gravity="center" android:background="#F5F5F5" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 2" android:gravity="center" android:background="#EEEEEE" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 3" android:gravity="center" android:background="#F5F5F5" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 4" android:gravity="center" android:background="#EEEEEE" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 5" android:gravity="center" android:background="#F5F5F5" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 6" android:gravity="center" android:background="#EEEEEE" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 7" android:gravity="center" android:background="#F5F5F5" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 8" android:gravity="center" android:background="#EEEEEE" android:layout_marginBottom="4dp" />
+        <TextView android:layout_width="match_parent" android:layout_height="60dp" android:text="Item 9 (bottom)" android:gravity="center" android:background="#F5F5F5" android:layout_marginBottom="4dp" android:contentDescription="Last scroll item" />
+
+    </LinearLayout>
+
+</ScrollView>
