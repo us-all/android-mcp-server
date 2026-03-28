@@ -195,7 +195,7 @@ Or from a local build:
 | `push-file` | Upload local file to device | W |
 | `delete-file` | Delete file or directory on device | W |
 
-### System (12)
+### System (11)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -236,7 +236,7 @@ Or from a local build:
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
 │               │  emulator.ts── 5 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 12 tools          │   │
+│  │ adb.ts  │  │  system.ts  ── 11 tools          │   │
 │  │ wrapper │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── error handling    │   │
 │               └──────────────────────────────────┘   │

@@ -176,7 +176,7 @@ Claude Desktop 설정에 추가:
 | `push-file` | 로컬 파일을 디바이스로 업로드 | W |
 | `delete-file` | 디바이스 파일/디렉토리 삭제 | W |
 
-### 시스템 (12)
+### 시스템 (11)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -217,7 +217,7 @@ Claude Desktop 설정에 추가:
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
 │               │  emulator.ts── 5 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 12 tools          │   │
+│  │ adb.ts  │  │  system.ts  ── 11 tools          │   │
 │  │ 래퍼    │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── 에러 핸들링       │   │
 │               └──────────────────────────────────┘   │
