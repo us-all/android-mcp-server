@@ -213,3 +213,170 @@ export async function stopApp(
   const output = await adbShell(`am force-stop ${params.packageName}`, opts);
   return { result: output || "App stopped successfully" };
 }
+
+// --- v1.1.0 additions ---
+
+export const clearAppDataSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name to clear data for. Example: 'com.example.app'"),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const grantPermissionSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name. Example: 'com.example.app'"),
+  permission: z
+    .string()
+    .describe(
+      "Permission to grant. Example: 'android.permission.CAMERA'",
+    ),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const revokePermissionSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name. Example: 'com.example.app'"),
+  permission: z
+    .string()
+    .describe(
+      "Permission to revoke. Example: 'android.permission.CAMERA'",
+    ),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const openUrlSchema = z.object({
+  url: z
+    .string()
+    .describe("URL to open on the device. Example: 'https://google.com'"),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const sendBroadcastSchema = z.object({
+  action: z
+    .string()
+    .describe(
+      "Broadcast action. Example: 'android.intent.action.BOOT_COMPLETED'",
+    ),
+  extras: z
+    .string()
+    .optional()
+    .describe(
+      "Extra key-value pairs as string. Example: '--es key value --ei count 5'. Supported: --es (string), --ei (int), --ez (boolean), --ef (float)",
+    ),
+  component: z
+    .string()
+    .optional()
+    .describe(
+      "Target component. Example: 'com.example.app/.MyReceiver'",
+    ),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getCurrentActivitySchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function clearAppData(
+  params: z.infer<typeof clearAppDataSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(`pm clear ${params.packageName}`, opts);
+  return { result: output.trim() };
+}
+
+export async function grantPermission(
+  params: z.infer<typeof grantPermissionSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell(
+    `pm grant ${params.packageName} ${params.permission}`,
+    opts,
+  );
+  return {
+    result: `Granted ${params.permission} to ${params.packageName}`,
+  };
+}
+
+export async function revokePermission(
+  params: z.infer<typeof revokePermissionSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell(
+    `pm revoke ${params.packageName} ${params.permission}`,
+    opts,
+  );
+  return {
+    result: `Revoked ${params.permission} from ${params.packageName}`,
+  };
+}
+
+export async function openUrl(params: z.infer<typeof openUrlSchema>) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(
+    `am start -a android.intent.action.VIEW -d '${params.url}'`,
+    opts,
+  );
+  return { result: output };
+}
+
+export async function sendBroadcast(
+  params: z.infer<typeof sendBroadcastSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  let cmd = `am broadcast -a ${params.action}`;
+  if (params.component) cmd += ` -n ${params.component}`;
+  if (params.extras) cmd += ` ${params.extras}`;
+  const output = await adbShell(cmd, opts);
+  return { result: output };
+}
+
+export async function getCurrentActivity(
+  params: z.infer<typeof getCurrentActivitySchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(
+    "dumpsys activity activities | grep -E 'mResumedActivity|mCurrentFocus'",
+    opts,
+  );
+
+  const lines = output.split("\n").filter(Boolean);
+  const info: Record<string, string> = {};
+
+  for (const line of lines) {
+    const resumed = line.match(
+      /mResumedActivity.*\{[^}]*\s+([^\s}]+)\s+/,
+    );
+    if (resumed) info.resumedActivity = resumed[1];
+
+    const focus = line.match(/mCurrentFocus.*\{[^}]*\s+([^\s}]+)\s*\}/);
+    if (focus) info.currentFocus = focus[1];
+  }
+
+  return { ...info, raw: lines };
+}

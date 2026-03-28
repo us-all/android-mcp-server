@@ -118,7 +118,7 @@ Or from a local build:
 }
 ```
 
-## Tools (35)
+## Tools (52)
 
 ### Device (5)
 
@@ -130,7 +130,7 @@ Or from a local build:
 | `connect-device` | Connect to device over TCP/IP (wireless ADB) | W |
 | `disconnect-device` | Disconnect TCP/IP device | W |
 
-### Apps (6)
+### Apps (12)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -140,8 +140,14 @@ Or from a local build:
 | `uninstall-app` | Uninstall app (optionally keep data) | W |
 | `launch-app` | Launch app by package name (or specific activity) | W |
 | `stop-app` | Force stop an app | W |
+| `clear-app-data` | Clear all app data and cache (test isolation) | W |
+| `grant-permission` | Grant a runtime permission (e.g. CAMERA) | W |
+| `revoke-permission` | Revoke a runtime permission | W |
+| `open-url` | Open URL on device browser (http/https/deep links) | W |
+| `send-broadcast` | Send broadcast intent with optional extras | W |
+| `get-current-activity` | Get currently visible activity and window focus | R |
 
-### UI Automation (7)
+### UI Automation (10)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -152,6 +158,9 @@ Or from a local build:
 | `swipe` | Swipe gesture from (x1,y1) to (x2,y2) | W |
 | `input-text` | Type text (special characters escaped) | W |
 | `press-key` | Key event: BACK, HOME, ENTER, VOLUME_UP, etc. | W |
+| `drag-and-drop` | Drag from one point to another (reorder items, etc.) | W |
+| `start-screen-recording` | Start recording device screen to video file (max 180s) | W |
+| `pull-screen-recording` | Pull recorded video from device to local filesystem | R |
 
 ### Logcat (4)
 
@@ -181,13 +190,21 @@ Or from a local build:
 | `push-file` | Upload local file to device | W |
 | `delete-file` | Delete file or directory on device | W |
 
-### System (3)
+### System (12)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
 | `get-battery-info` | Battery level, charging state, temperature, health | R |
 | `get-network-info` | WiFi status, IP address, connectivity details | R |
 | `change-setting` | Modify system/secure/global settings | W |
+| `get-setting` | Read a system setting value (system/secure/global) | R |
+| `set-display-size` | Override display resolution (responsive testing) | W |
+| `set-display-density` | Override display density in DPI | W |
+| `keep-screen-on` | Prevent screen timeout while charging | W |
+| `port-forward` | Forward host port to device port (adb forward) | W |
+| `reverse-forward` | Reverse forward device port to host (adb reverse) | W |
+| `list-forwards` | List all active port forwards and reverses | R |
+| `remove-forward` | Remove specific or all port forwards | W |
 
 ### Shell (1)
 

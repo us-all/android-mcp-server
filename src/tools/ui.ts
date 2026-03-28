@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
-import { adbShell, adbRawBuffer } from "../adb.js";
+import { adb, adbShell, adbRawBuffer } from "../adb.js";
 import { assertWriteAllowed } from "./utils.js";
 
 // --- Schemas ---
@@ -249,4 +249,103 @@ export async function pressKey(params: z.infer<typeof pressKeySchema>) {
     : `KEYCODE_${params.key.toUpperCase()}`;
   await adbShell(`input keyevent ${keycode}`, opts);
   return { result: `Pressed key: ${keycode}` };
+}
+
+// --- v1.1.0 additions ---
+
+export const dragAndDropSchema = z.object({
+  x1: z.coerce.number().describe("Start X coordinate."),
+  y1: z.coerce.number().describe("Start Y coordinate."),
+  x2: z.coerce.number().describe("End X coordinate."),
+  y2: z.coerce.number().describe("End Y coordinate."),
+  duration: z
+    .coerce
+    .number()
+    .optional()
+    .default(1000)
+    .describe("Duration in milliseconds (default: 1000)."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const screenRecordStartSchema = z.object({
+  fileName: z
+    .string()
+    .optional()
+    .default("recording.mp4")
+    .describe("Output file name on device (default: recording.mp4)."),
+  timeLimit: z
+    .coerce
+    .number()
+    .optional()
+    .default(30)
+    .describe("Max recording duration in seconds (default: 30, max: 180)."),
+  size: z
+    .string()
+    .optional()
+    .describe("Video resolution WxH. Example: '720x1280'. Uses device resolution if omitted."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const screenRecordPullSchema = z.object({
+  fileName: z
+    .string()
+    .optional()
+    .default("recording.mp4")
+    .describe("Recording file name on device (default: recording.mp4)."),
+  localPath: z
+    .string()
+    .describe("Local path to save the recording."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function dragAndDrop(
+  params: z.infer<typeof dragAndDropSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell(
+    `input draganddrop ${params.x1} ${params.y1} ${params.x2} ${params.y2} ${params.duration}`,
+    opts,
+  );
+  return {
+    result: `Dragged from (${params.x1}, ${params.y1}) to (${params.x2}, ${params.y2})`,
+  };
+}
+
+export async function screenRecordStart(
+  params: z.infer<typeof screenRecordStartSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const remotePath = `/sdcard/${params.fileName}`;
+  let cmd = `screenrecord --time-limit ${Math.min(params.timeLimit, 180)} ${remotePath}`;
+  if (params.size) cmd = `screenrecord --size ${params.size} --time-limit ${Math.min(params.timeLimit, 180)} ${remotePath}`;
+
+  // screenrecord blocks, so run it without waiting
+  adbShell(cmd, { ...opts, timeout: (params.timeLimit + 5) * 1000 }).catch(
+    () => {},
+  );
+
+  return {
+    result: `Recording started: ${remotePath} (max ${params.timeLimit}s)`,
+    remotePath,
+  };
+}
+
+export async function screenRecordPull(
+  params: z.infer<typeof screenRecordPullSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const remotePath = `/sdcard/${params.fileName}`;
+  const output = await adb(["pull", remotePath, params.localPath], opts);
+  return { result: output };
 }
