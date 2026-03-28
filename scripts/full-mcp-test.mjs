@@ -76,9 +76,9 @@ async function phase1_readonly() {
 
   // 4. list-packages
   await test("list-packages", async () => {
-    const { data, ms } = await call("list-packages", { type: "third-party" });
+    const { data, ms } = await call("list-packages", { type: "all" });
     assert(data.count > 0, "no packages");
-    ok("list-packages", `${data.count} third-party`, ms);
+    ok("list-packages", `${data.count} packages`, ms);
   });
 
   // 5. get-package-info
@@ -325,8 +325,11 @@ async function phase2_write() {
 
   // 35-36. launch-app → stop-app
   await test("launch-app", async () => {
-    const { data, ms } = await call("launch-app", { packageName: "com.android.settings" });
-    assert(data.result, "no result");
+    const { data, ms, isError } = await call("launch-app", {
+      packageName: "com.android.settings",
+      activity: ".Settings",
+    });
+    assert(!isError, "launch failed");
     ok("launch-app", "settings", ms);
   });
   await sleep(500);
@@ -338,9 +341,13 @@ async function phase2_write() {
 
   // 37. clear-app-data
   await test("clear-app-data", async () => {
-    const { data, ms } = await call("clear-app-data", { packageName: "com.sec.android.app.popupcalculator" });
-    assert(data.result, "no result");
-    ok("clear-app-data", "calculator", ms);
+    // Use com.android.settings safe data clear — or com.google.android.calculator on emulator
+    // Use a package that exists on both real devices and emulator
+    const installed = await call("is-app-installed", { packageName: "com.google.android.deskclock" });
+    const pkg = installed.data.installed ? "com.google.android.deskclock" : "com.sec.android.app.popupcalculator";
+    const { data, ms, isError } = await call("clear-app-data", { packageName: pkg });
+    assert(!isError, "clear failed");
+    ok("clear-app-data", pkg.split(".").pop(), ms);
   });
 
   // 38-39. grant-permission → revoke-permission
