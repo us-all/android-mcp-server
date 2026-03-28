@@ -102,7 +102,7 @@ interface UiElement {
   center?: { x: number; y: number };
 }
 
-function parseBounds(boundsStr: string): { x: number; y: number } | undefined {
+export function parseBounds(boundsStr: string): { x: number; y: number } | undefined {
   const match = boundsStr.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
   if (!match) return undefined;
   const x1 = parseInt(match[1], 10);
@@ -112,7 +112,7 @@ function parseBounds(boundsStr: string): { x: number; y: number } | undefined {
   return { x: Math.round((x1 + x2) / 2), y: Math.round((y1 + y2) / 2) };
 }
 
-function isInteractive(attrs: Record<string, string>): boolean {
+export function isInteractive(attrs: Record<string, string>): boolean {
   return (
     attrs["@_clickable"] === "true" ||
     attrs["@_long-clickable"] === "true" ||
@@ -122,7 +122,7 @@ function isInteractive(attrs: Record<string, string>): boolean {
   );
 }
 
-function flattenNodes(
+export function flattenNodes(
   node: Record<string, unknown>,
   result: UiElement[],
   compact: boolean,
