@@ -291,3 +291,189 @@ export async function removeForward(
   await adb(["reverse", "--remove-all"], opts);
   return { result: "Removed all forwards and reverses" };
 }
+
+// --- v1.2.0 additions ---
+
+export const toggleWifiSchema = z.object({
+  enabled: z.boolean().describe("true to enable WiFi, false to disable."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const toggleMobileDataSchema = z.object({
+  enabled: z.boolean().describe("true to enable mobile data, false to disable."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const openNotificationSchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const lockDeviceSchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const unlockDeviceSchema = z.object({
+  pin: z
+    .string()
+    .optional()
+    .describe("PIN or password to unlock. Omit if no lock screen security."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getOrientationSchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const setOrientationSchema = z.object({
+  orientation: z
+    .enum(["portrait", "landscape", "auto"])
+    .describe("Screen orientation: portrait (0), landscape (1), or auto (enable auto-rotate)."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const listSettingsSchema = z.object({
+  namespace: z
+    .enum(["system", "secure", "global"])
+    .describe("Settings namespace to list."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function toggleWifi(
+  params: z.infer<typeof toggleWifiSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const cmd = params.enabled ? "svc wifi enable" : "svc wifi disable";
+  await adbShell(cmd, opts);
+  return { result: `WiFi ${params.enabled ? "enabled" : "disabled"}` };
+}
+
+export async function toggleMobileData(
+  params: z.infer<typeof toggleMobileDataSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const cmd = params.enabled ? "svc data enable" : "svc data disable";
+  await adbShell(cmd, opts);
+  return { result: `Mobile data ${params.enabled ? "enabled" : "disabled"}` };
+}
+
+export async function openNotification(
+  params: z.infer<typeof openNotificationSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell("cmd statusbar expand-notifications", opts);
+  return { result: "Notification panel opened" };
+}
+
+export async function lockDevice(
+  params: z.infer<typeof lockDeviceSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell("input keyevent KEYCODE_POWER", opts);
+  return { result: "Device locked (power button pressed)" };
+}
+
+export async function unlockDevice(
+  params: z.infer<typeof unlockDeviceSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  // Wake up
+  await adbShell("input keyevent KEYCODE_WAKEUP", opts);
+  // Swipe up to dismiss lock screen
+  await adbShell("input swipe 540 1800 540 800 300", opts);
+  // Enter PIN if provided
+  if (params.pin) {
+    await adbShell(`input text ${params.pin}`, opts);
+    await adbShell("input keyevent KEYCODE_ENTER", opts);
+  }
+  return { result: "Device unlock attempted" };
+}
+
+export async function getOrientation(
+  params: z.infer<typeof getOrientationSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const [rotation, autoRotate] = await Promise.all([
+    adbShell("dumpsys input | grep 'SurfaceOrientation'", opts).catch(() => ""),
+    adbShell("settings get system accelerometer_rotation", opts).catch(() => "0"),
+  ]);
+
+  const rotMatch = rotation.match(/SurfaceOrientation:\s*(\d)/);
+  const rotValue = rotMatch ? parseInt(rotMatch[1], 10) : 0;
+  const orientations = ["portrait", "landscape", "reverse-portrait", "reverse-landscape"];
+
+  return {
+    rotation: rotValue,
+    orientation: orientations[rotValue] ?? "unknown",
+    autoRotate: autoRotate.trim() === "1",
+  };
+}
+
+export async function setOrientation(
+  params: z.infer<typeof setOrientationSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+
+  if (params.orientation === "auto") {
+    await adbShell("settings put system accelerometer_rotation 1", opts);
+    return { result: "Auto-rotate enabled" };
+  }
+
+  // Disable auto-rotate first
+  await adbShell("settings put system accelerometer_rotation 0", opts);
+  const value = params.orientation === "portrait" ? "0" : "1";
+  await adbShell(
+    `settings put system user_rotation ${value}`,
+    opts,
+  );
+  return { result: `Orientation set to ${params.orientation}` };
+}
+
+export async function listSettings(
+  params: z.infer<typeof listSettingsSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(
+    `settings list ${params.namespace}`,
+    opts,
+  );
+
+  const settings: Record<string, string> = {};
+  for (const line of output.split("\n")) {
+    const idx = line.indexOf("=");
+    if (idx > 0) {
+      settings[line.substring(0, idx)] = line.substring(idx + 1);
+    }
+  }
+
+  return { namespace: params.namespace, count: Object.keys(settings).length, settings };
+}

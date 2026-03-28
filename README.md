@@ -123,7 +123,7 @@ Or from a local build:
 }
 ```
 
-## Tools (52)
+## Tools (69)
 
 ### Device (5)
 
@@ -135,7 +135,7 @@ Or from a local build:
 | `connect-device` | Connect to device over TCP/IP (wireless ADB) | W |
 | `disconnect-device` | Disconnect TCP/IP device | W |
 
-### Apps (12)
+### Apps (14)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -151,8 +151,10 @@ Or from a local build:
 | `open-url` | Open URL on device browser (http/https/deep links) | W |
 | `send-broadcast` | Send broadcast intent with optional extras | W |
 | `get-current-activity` | Get currently visible activity and window focus | R |
+| `is-app-installed` | Check if an app is installed (boolean) | R |
+| `get-app-intents` | Discover intent actions and deep links for an app | R |
 
-### UI Automation (10)
+### UI Automation (11)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -166,6 +168,7 @@ Or from a local build:
 | `drag-and-drop` | Drag from one point to another (reorder items, etc.) | W |
 | `start-screen-recording` | Start recording device screen to video file (max 180s) | W |
 | `pull-screen-recording` | Pull recorded video from device to local filesystem | R |
+| `double-tap` | Double tap at screen coordinates | W |
 
 ### Logcat (4)
 
@@ -176,7 +179,7 @@ Or from a local build:
 | `search-logcat` | Search logs by text pattern (case-insensitive supported) | R |
 | `get-crash-logs` | Extract crash/fatal logs, optionally filtered by package | R |
 
-### Emulator (5)
+### Emulator (7)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -185,6 +188,8 @@ Or from a local build:
 | `stop-emulator` | Stop a running emulator | W |
 | `list-snapshots` | List emulator snapshots | R |
 | `load-snapshot` | Load an emulator snapshot | W |
+| `save-snapshot` | Save current emulator state as snapshot | W |
+| `delete-snapshot` | Delete an emulator snapshot | W |
 
 ### Files (4)
 
@@ -195,7 +200,7 @@ Or from a local build:
 | `push-file` | Upload local file to device | W |
 | `delete-file` | Delete file or directory on device | W |
 
-### System (11)
+### System (19)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -210,6 +215,23 @@ Or from a local build:
 | `reverse-forward` | Reverse forward device port to host (adb reverse) | W |
 | `list-forwards` | List all active port forwards and reverses | R |
 | `remove-forward` | Remove specific or all port forwards | W |
+| `toggle-wifi` | Enable or disable WiFi | W |
+| `toggle-mobile-data` | Enable or disable mobile data | W |
+| `open-notification` | Open notification/status bar panel | W |
+| `lock-device` | Lock the device screen | W |
+| `unlock-device` | Wake up and unlock (optional PIN) | W |
+| `get-orientation` | Get screen orientation and auto-rotate setting | R |
+| `set-orientation` | Set orientation: portrait, landscape, or auto | W |
+| `list-settings` | List all settings in a namespace | R |
+
+### Debug (4)
+
+| Tool | Description | R/W |
+|------|-------------|-----|
+| `bugreport` | Generate full Android bugreport zip (up to 2 min) | R |
+| `get-mem-info` | Memory usage: per-app PSS/heap or system summary | R |
+| `get-gfx-info` | GPU rendering: frame count, jank %, percentile latencies | R |
+| `get-cpu-info` | CPU usage with top consuming processes | R |
 
 ### Shell (1)
 
@@ -231,13 +253,14 @@ Or from a local build:
 │  ┌─────────┐  ┌──────────────────────────────────┐   │
 │  │config.ts│  │          tools/                   │   │
 │  │ ADB path│  │  device.ts  ── 5 tools           │   │
-│  │ serial  │  │  apps.ts    ── 12 tools          │   │
-│  │ perms   │  │  ui.ts      ── 10 tools          │   │
+│  │ serial  │  │  apps.ts    ── 14 tools          │   │
+│  │ perms   │  │  ui.ts      ── 11 tools          │   │
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
-│               │  emulator.ts── 5 tools           │   │
+│               │  emulator.ts── 7 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 11 tools          │   │
-│  │ wrapper │  │  shell.ts   ── 1 tool            │   │
+│  │ adb.ts  │  │  system.ts  ── 19 tools          │   │
+│  │ wrapper │  │  debug.ts   ── 4 tools           │   │
+│  │         │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── error handling    │   │
 │               └──────────────────────────────────┘   │
 └─────────────────────┬────────────────────────────────┘

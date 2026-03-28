@@ -1,0 +1,168 @@
+import { z } from "zod";
+import { adb, adbShell } from "../adb.js";
+
+// --- Schemas ---
+
+export const bugreportSchema = z.object({
+  localPath: z
+    .string()
+    .describe("Local path to save the bugreport zip file."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getMemInfoSchema = z.object({
+  packageName: z
+    .string()
+    .optional()
+    .describe(
+      "Package name for app-specific memory info. Shows system summary if omitted.",
+    ),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getGfxInfoSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name to get GPU rendering info for."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getCpuInfoSchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+// --- Handlers ---
+
+export async function bugreport(params: z.infer<typeof bugreportSchema>) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adb(
+    ["bugreport", params.localPath],
+    { ...opts, timeout: 120_000 },
+  );
+  return { result: output };
+}
+
+export async function getMemInfo(params: z.infer<typeof getMemInfoSchema>) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const cmd = params.packageName
+    ? `dumpsys meminfo ${params.packageName}`
+    : "dumpsys meminfo -s";
+  const output = await adbShell(cmd, opts);
+
+  if (params.packageName) {
+    const info: Record<string, string | number> = {
+      packageName: params.packageName,
+    };
+
+    const totalPss = output.match(/TOTAL\s+(\d+)/);
+    if (totalPss) info.totalPssKB = parseInt(totalPss[1], 10);
+
+    const nativeHeap = output.match(/Native Heap\s+(\d+)/);
+    if (nativeHeap) info.nativeHeapKB = parseInt(nativeHeap[1], 10);
+
+    const dalvikHeap = output.match(/Dalvik Heap\s+(\d+)/);
+    if (dalvikHeap) info.dalvikHeapKB = parseInt(dalvikHeap[1], 10);
+
+    const views = output.match(/Views:\s*(\d+)/);
+    if (views) info.views = parseInt(views[1], 10);
+
+    const activities = output.match(/Activities:\s*(\d+)/);
+    if (activities) info.activities = parseInt(activities[1], 10);
+
+    return info;
+  }
+
+  // System summary: extract top consumers
+  const lines = output.split("\n");
+  const summary = lines
+    .filter((l) => l.match(/^\s+\d+.*K:/))
+    .slice(0, 15)
+    .map((l) => l.trim());
+
+  const totalRam = output.match(/Total RAM:\s*([^\n]+)/);
+  const freeRam = output.match(/Free RAM:\s*([^\n]+)/);
+  const usedRam = output.match(/Used RAM:\s*([^\n]+)/);
+
+  return {
+    totalRam: totalRam?.[1]?.trim(),
+    freeRam: freeRam?.[1]?.trim(),
+    usedRam: usedRam?.[1]?.trim(),
+    topConsumers: summary,
+  };
+}
+
+export async function getGfxInfo(params: z.infer<typeof getGfxInfoSchema>) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(
+    `dumpsys gfxinfo ${params.packageName} framestats`,
+    opts,
+  );
+
+  const info: Record<string, unknown> = {
+    packageName: params.packageName,
+  };
+
+  const totalFrames = output.match(/Total frames rendered:\s*(\d+)/);
+  if (totalFrames) info.totalFrames = parseInt(totalFrames[1], 10);
+
+  const janky = output.match(/Janky frames:\s*(\d+)\s*\(([^)]+)\)/);
+  if (janky) {
+    info.jankyFrames = parseInt(janky[1], 10);
+    info.jankyPercentage = janky[2];
+  }
+
+  const p50 = output.match(/50th percentile:\s*(\d+)ms/);
+  if (p50) info.p50ms = parseInt(p50[1], 10);
+
+  const p90 = output.match(/90th percentile:\s*(\d+)ms/);
+  if (p90) info.p90ms = parseInt(p90[1], 10);
+
+  const p95 = output.match(/95th percentile:\s*(\d+)ms/);
+  if (p95) info.p95ms = parseInt(p95[1], 10);
+
+  const p99 = output.match(/99th percentile:\s*(\d+)ms/);
+  if (p99) info.p99ms = parseInt(p99[1], 10);
+
+  return info;
+}
+
+export async function getCpuInfo(params: z.infer<typeof getCpuInfoSchema>) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell("dumpsys cpuinfo", opts);
+
+  const lines = output.split("\n").filter(Boolean);
+  const processes = lines
+    .filter((l) => l.match(/^\s+[\d.]+%/))
+    .slice(0, 20)
+    .map((l) => {
+      const match = l.match(/^\s+([\d.]+)%\s+([\d.]+)%\s+(\d+)\/(.+)/);
+      if (match) {
+        return {
+          totalCpu: match[1] + "%",
+          userCpu: match[2] + "%",
+          pid: parseInt(match[3], 10),
+          process: match[4].trim(),
+        };
+      }
+      return l.trim();
+    });
+
+  const totalLine = lines.find((l) => l.includes("TOTAL"));
+
+  return {
+    total: totalLine?.trim(),
+    topProcesses: processes,
+  };
+}

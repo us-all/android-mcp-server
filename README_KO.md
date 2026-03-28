@@ -104,7 +104,7 @@ Claude Desktop 설정에 추가:
 }
 ```
 
-## 도구 (52)
+## 도구 (69)
 
 ### 디바이스 (5)
 
@@ -116,7 +116,7 @@ Claude Desktop 설정에 추가:
 | `connect-device` | TCP/IP (무선 ADB) 디바이스 연결 | W |
 | `disconnect-device` | TCP/IP 디바이스 연결 해제 | W |
 
-### 앱 관리 (12)
+### 앱 관리 (14)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -132,8 +132,10 @@ Claude Desktop 설정에 추가:
 | `open-url` | 디바이스에서 URL 열기 (http/https/딥링크) | W |
 | `send-broadcast` | 브로드캐스트 인텐트 전송 (옵션 extras 지원) | W |
 | `get-current-activity` | 현재 표시 중인 액티비티 및 윈도우 포커스 확인 | R |
+| `is-app-installed` | 앱 설치 여부 확인 (boolean) | R |
+| `get-app-intents` | 앱의 인텐트 액션 및 딥링크 탐색 | R |
 
-### UI 자동화 (10)
+### UI 자동화 (11)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -147,6 +149,7 @@ Claude Desktop 설정에 추가:
 | `drag-and-drop` | 한 지점에서 다른 지점으로 드래그 (리스트 정렬 등) | W |
 | `start-screen-recording` | 디바이스 화면 녹화 시작 (최대 180초) | W |
 | `pull-screen-recording` | 녹화된 영상을 로컬로 가져오기 | R |
+| `double-tap` | 화면 좌표에 더블 탭 | W |
 
 ### Logcat (4)
 
@@ -157,7 +160,7 @@ Claude Desktop 설정에 추가:
 | `search-logcat` | 텍스트 패턴으로 로그 검색 (대소문자 구분 옵션) | R |
 | `get-crash-logs` | 크래시/Fatal 로그 추출 (패키지별 필터 가능) | R |
 
-### 에뮬레이터 (5)
+### 에뮬레이터 (7)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -166,6 +169,8 @@ Claude Desktop 설정에 추가:
 | `stop-emulator` | 실행 중인 에뮬레이터 종료 | W |
 | `list-snapshots` | 에뮬레이터 스냅샷 목록 | R |
 | `load-snapshot` | 에뮬레이터 스냅샷 로드 | W |
+| `save-snapshot` | 현재 에뮬레이터 상태를 스냅샷으로 저장 | W |
+| `delete-snapshot` | 에뮬레이터 스냅샷 삭제 | W |
 
 ### 파일 (4)
 
@@ -176,7 +181,7 @@ Claude Desktop 설정에 추가:
 | `push-file` | 로컬 파일을 디바이스로 업로드 | W |
 | `delete-file` | 디바이스 파일/디렉토리 삭제 | W |
 
-### 시스템 (11)
+### 시스템 (19)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -191,6 +196,23 @@ Claude Desktop 설정에 추가:
 | `reverse-forward` | 디바이스 포트를 호스트 포트로 역포워딩 (adb reverse) | W |
 | `list-forwards` | 활성 포트 포워드/리버스 목록 | R |
 | `remove-forward` | 특정 또는 전체 포트 포워드 제거 | W |
+| `toggle-wifi` | WiFi 활성화/비활성화 | W |
+| `toggle-mobile-data` | 모바일 데이터 활성화/비활성화 | W |
+| `open-notification` | 알림/상태 바 패널 열기 | W |
+| `lock-device` | 디바이스 화면 잠금 | W |
+| `unlock-device` | 디바이스 깨우기 및 잠금 해제 (PIN 옵션) | W |
+| `get-orientation` | 화면 방향 및 자동 회전 설정 확인 | R |
+| `set-orientation` | 화면 방향 설정: portrait, landscape, auto | W |
+| `list-settings` | 네임스페이스의 전체 설정 목록 | R |
+
+### 디버그 (4)
+
+| 도구 | 설명 | R/W |
+|------|------|-----|
+| `bugreport` | Android 버그리포트 zip 생성 (최대 2분) | R |
+| `get-mem-info` | 메모리 사용량: 앱별 PSS/힙 또는 시스템 요약 | R |
+| `get-gfx-info` | GPU 렌더링: 프레임 수, 버벅임 비율, 지연 백분위 | R |
+| `get-cpu-info` | CPU 사용량 및 상위 프로세스 | R |
 
 ### 셸 (1)
 
@@ -212,13 +234,14 @@ Claude Desktop 설정에 추가:
 │  ┌─────────┐  ┌──────────────────────────────────┐   │
 │  │config.ts│  │          tools/                   │   │
 │  │ ADB 경로│  │  device.ts  ── 5 tools           │   │
-│  │ 시리얼  │  │  apps.ts    ── 12 tools          │   │
-│  │ 권한    │  │  ui.ts      ── 10 tools          │   │
+│  │ 시리얼  │  │  apps.ts    ── 14 tools          │   │
+│  │ 권한    │  │  ui.ts      ── 11 tools          │   │
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
-│               │  emulator.ts── 5 tools           │   │
+│               │  emulator.ts── 7 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 11 tools          │   │
-│  │ 래퍼    │  │  shell.ts   ── 1 tool            │   │
+│  │ adb.ts  │  │  system.ts  ── 19 tools          │   │
+│  │ 래퍼    │  │  debug.ts   ── 4 tools           │   │
+│  │         │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── 에러 핸들링       │   │
 │               └──────────────────────────────────┘   │
 └─────────────────────┬────────────────────────────────┘

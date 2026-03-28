@@ -349,3 +349,22 @@ export async function screenRecordPull(
   const output = await adb(["pull", remotePath, params.localPath], opts);
   return { result: output };
 }
+
+// --- v1.2.0 additions ---
+
+export const doubleTapSchema = z.object({
+  x: z.coerce.number().describe("X coordinate to double tap."),
+  y: z.coerce.number().describe("Y coordinate to double tap."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function doubleTap(params: z.infer<typeof doubleTapSchema>) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  await adbShell(`input tap ${params.x} ${params.y}`, opts);
+  await adbShell(`input tap ${params.x} ${params.y}`, opts);
+  return { result: `Double tapped at (${params.x}, ${params.y})` };
+}

@@ -380,3 +380,60 @@ export async function getCurrentActivity(
 
   return { ...info, raw: lines };
 }
+
+// --- v1.2.0 additions ---
+
+export const isAppInstalledSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name to check. Example: 'com.android.chrome'"),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const getAppIntentsSchema = z.object({
+  packageName: z
+    .string()
+    .describe("Package name to discover intents for. Example: 'com.android.chrome'"),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function isAppInstalled(
+  params: z.infer<typeof isAppInstalledSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(`pm list packages ${params.packageName}`, opts);
+  const installed = output.split("\n").some(
+    (l) => l.trim() === `package:${params.packageName}`,
+  );
+  return { packageName: params.packageName, installed };
+}
+
+export async function getAppIntents(
+  params: z.infer<typeof getAppIntentsSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const output = await adbShell(
+    `dumpsys package ${params.packageName} | grep -A 1 "android.intent.action"`,
+    opts,
+  );
+
+  const actions = new Set<string>();
+  for (const line of output.split("\n")) {
+    const match = line.match(/Action:\s*"([^"]+)"/);
+    if (match) actions.add(match[1]);
+    const match2 = line.match(/(android\.intent\.action\.\S+)/);
+    if (match2) actions.add(match2[1]);
+  }
+
+  return {
+    packageName: params.packageName,
+    intentCount: actions.size,
+    intents: [...actions].sort(),
+  };
+}

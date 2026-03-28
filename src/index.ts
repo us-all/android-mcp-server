@@ -45,6 +45,10 @@ import {
   sendBroadcast,
   getCurrentActivitySchema,
   getCurrentActivity,
+  isAppInstalledSchema,
+  isAppInstalled,
+  getAppIntentsSchema,
+  getAppIntents,
 } from "./tools/apps.js";
 
 // UI tools
@@ -69,6 +73,8 @@ import {
   screenRecordStart,
   screenRecordPullSchema,
   screenRecordPull,
+  doubleTapSchema,
+  doubleTap,
 } from "./tools/ui.js";
 
 // Logcat tools
@@ -95,6 +101,10 @@ import {
   listSnapshots,
   loadSnapshotSchema,
   loadSnapshot,
+  saveSnapshotSchema,
+  saveSnapshot,
+  deleteSnapshotSchema,
+  deleteSnapshot,
 } from "./tools/emulator.js";
 
 // File tools
@@ -136,7 +146,35 @@ import {
   listForwards,
   removeForwardSchema,
   removeForward,
+  toggleWifiSchema,
+  toggleWifi,
+  toggleMobileDataSchema,
+  toggleMobileData,
+  openNotificationSchema,
+  openNotification,
+  lockDeviceSchema,
+  lockDevice,
+  unlockDeviceSchema,
+  unlockDevice,
+  getOrientationSchema,
+  getOrientation,
+  setOrientationSchema,
+  setOrientation,
+  listSettingsSchema,
+  listSettings,
 } from "./tools/system.js";
+
+// Debug tools
+import {
+  bugreportSchema,
+  bugreport,
+  getMemInfoSchema,
+  getMemInfo,
+  getGfxInfoSchema,
+  getGfxInfo,
+  getCpuInfoSchema,
+  getCpuInfo,
+} from "./tools/debug.js";
 
 // --- Server setup ---
 
@@ -144,7 +182,7 @@ await validateConfig();
 
 const server = new McpServer({
   name: "android-mcp-server",
-  version: "1.1.0",
+  version: "1.2.0",
 });
 
 // ========== Device tools ==========
@@ -531,6 +569,135 @@ server.tool(
   "Remove a specific port forward or all forwards/reverses. Requires ANDROID_MCP_ALLOW_WRITE=true",
   removeForwardSchema.shape,
   wrapToolHandler(removeForward),
+);
+
+// ========== v1.2.0 — App tools ==========
+
+server.tool(
+  "is-app-installed",
+  "Check if an app is installed on the device (returns boolean)",
+  isAppInstalledSchema.shape,
+  wrapToolHandler(isAppInstalled),
+);
+
+server.tool(
+  "get-app-intents",
+  "Discover intent actions and deep links supported by an app",
+  getAppIntentsSchema.shape,
+  wrapToolHandler(getAppIntents),
+);
+
+// ========== v1.2.0 — UI tools ==========
+
+server.tool(
+  "double-tap",
+  "Double tap at specific screen coordinates. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  doubleTapSchema.shape,
+  wrapToolHandler(doubleTap),
+);
+
+// ========== v1.2.0 — Emulator tools ==========
+
+server.tool(
+  "save-snapshot",
+  "Save the current emulator state as a named snapshot. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  saveSnapshotSchema.shape,
+  wrapToolHandler(saveSnapshot),
+);
+
+server.tool(
+  "delete-snapshot",
+  "Delete an emulator snapshot. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  deleteSnapshotSchema.shape,
+  wrapToolHandler(deleteSnapshot),
+);
+
+// ========== v1.2.0 — System tools ==========
+
+server.tool(
+  "toggle-wifi",
+  "Enable or disable WiFi. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  toggleWifiSchema.shape,
+  wrapToolHandler(toggleWifi),
+);
+
+server.tool(
+  "toggle-mobile-data",
+  "Enable or disable mobile data. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  toggleMobileDataSchema.shape,
+  wrapToolHandler(toggleMobileData),
+);
+
+server.tool(
+  "open-notification",
+  "Open the notification/status bar panel. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  openNotificationSchema.shape,
+  wrapToolHandler(openNotification),
+);
+
+server.tool(
+  "lock-device",
+  "Lock the device screen (press power button). Requires ANDROID_MCP_ALLOW_WRITE=true",
+  lockDeviceSchema.shape,
+  wrapToolHandler(lockDevice),
+);
+
+server.tool(
+  "unlock-device",
+  "Wake up and unlock the device. Optionally enter PIN/password. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  unlockDeviceSchema.shape,
+  wrapToolHandler(unlockDevice),
+);
+
+server.tool(
+  "get-orientation",
+  "Get current screen orientation and auto-rotate setting",
+  getOrientationSchema.shape,
+  wrapToolHandler(getOrientation),
+);
+
+server.tool(
+  "set-orientation",
+  "Set screen orientation to portrait, landscape, or auto-rotate. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  setOrientationSchema.shape,
+  wrapToolHandler(setOrientation),
+);
+
+server.tool(
+  "list-settings",
+  "List all settings in a namespace (system/secure/global)",
+  listSettingsSchema.shape,
+  wrapToolHandler(listSettings),
+);
+
+// ========== v1.2.0 — Debug tools ==========
+
+server.tool(
+  "bugreport",
+  "Generate a full Android bugreport zip file. Takes up to 2 minutes",
+  bugreportSchema.shape,
+  wrapToolHandler(bugreport),
+);
+
+server.tool(
+  "get-mem-info",
+  "Get memory usage info. Per-app (PSS, heap, views) or system summary (RAM, top consumers)",
+  getMemInfoSchema.shape,
+  wrapToolHandler(getMemInfo),
+);
+
+server.tool(
+  "get-gfx-info",
+  "Get GPU rendering performance: frame count, jank percentage, percentile latencies",
+  getGfxInfoSchema.shape,
+  wrapToolHandler(getGfxInfo),
+);
+
+server.tool(
+  "get-cpu-info",
+  "Get CPU usage info with top consuming processes",
+  getCpuInfoSchema.shape,
+  wrapToolHandler(getCpuInfo),
 );
 
 // --- Start server ---

@@ -155,3 +155,45 @@ export async function loadSnapshot(
   );
   return { result: output || `Snapshot '${params.snapshotName}' loaded` };
 }
+
+// --- v1.2.0 additions ---
+
+export const saveSnapshotSchema = z.object({
+  snapshotName: z.string().describe("Name for the new snapshot."),
+  serial: z
+    .string()
+    .optional()
+    .default("emulator-5554")
+    .describe("Emulator serial number (default: 'emulator-5554')."),
+});
+
+export const deleteSnapshotSchema = z.object({
+  snapshotName: z.string().describe("Name of the snapshot to delete."),
+  serial: z
+    .string()
+    .optional()
+    .default("emulator-5554")
+    .describe("Emulator serial number (default: 'emulator-5554')."),
+});
+
+export async function saveSnapshot(
+  params: z.infer<typeof saveSnapshotSchema>,
+) {
+  assertWriteAllowed();
+  const output = await adb(
+    ["emu", "avd", "snapshot", "save", params.snapshotName],
+    { serial: params.serial },
+  );
+  return { result: output || `Snapshot '${params.snapshotName}' saved` };
+}
+
+export async function deleteSnapshot(
+  params: z.infer<typeof deleteSnapshotSchema>,
+) {
+  assertWriteAllowed();
+  const output = await adb(
+    ["emu", "avd", "snapshot", "delete", params.snapshotName],
+    { serial: params.serial },
+  );
+  return { result: output || `Snapshot '${params.snapshotName}' deleted` };
+}
