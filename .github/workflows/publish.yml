@@ -1,8 +1,12 @@
 name: Publish to npm
 
 on:
-  release:
-    types: [published]
+  push:
+    tags: ["v*"]
+
+concurrency:
+  group: npm-publish
+  cancel-in-progress: false
 
 jobs:
   publish:
@@ -10,21 +14,43 @@ jobs:
     permissions:
       contents: read
       id-token: write
-
+    environment: npm
     steps:
       - uses: actions/checkout@v4
-
       - uses: pnpm/action-setup@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: pnpm
           registry-url: https://registry.npmjs.org
-
+      - name: Upgrade npm for trusted publishing
+        run: npm install -g npm@latest
+      - name: Verify npm version (>=11.5.1 required)
+        run: |
+          NPM_VERSION=$(npm --version)
+          echo "npm version: $NPM_VERSION"
+          MAJOR=$(echo "$NPM_VERSION" | cut -d. -f1)
+          MINOR=$(echo "$NPM_VERSION" | cut -d. -f2)
+          if [ "$MAJOR" -lt 11 ] || { [ "$MAJOR" -eq 11 ] && [ "$MINOR" -lt 5 ]; }; then
+            echo "ERROR: npm $NPM_VERSION < 11.5.1 — trusted publishing requires npm >=11.5.1"
+            exit 1
+          fi
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm test
-      - run: pnpm publish --access public --no-git-checks
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Preflight dry-run
+        run: npm publish --access public --provenance --dry-run
+      - name: Publish to npm with provenance
+        run: npm publish --access public --provenance
+
+  github-release:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
