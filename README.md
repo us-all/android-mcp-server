@@ -14,6 +14,11 @@ Android MCP server — ADB-based device management, UI automation, logcat debugg
 | Emulator lifecycle (AVD start/stop/snapshot) | — | ✓ |
 | File management (push/pull) | — | ✓ |
 | System info (battery, network, settings) | — | ✓ |
+| App data clear & permission management | — | ✓ |
+| Screen recording (start/pull) | — | ✓ |
+| Port forwarding (forward/reverse) | — | ✓ |
+| Display size/density override | — | ✓ |
+| Broadcast intents & deep link testing | — | ✓ |
 | 2-tier security (write + shell gating) | — | ✓ |
 | Pure ADB (no Appium/uiautomator2 dependency) | — | ✓ |
 | TypeScript + official MCP SDK | — | ✓ |
@@ -23,7 +28,7 @@ Android MCP server — ADB-based device management, UI automation, logcat debugg
 ### 1. npx (recommended)
 
 ```bash
-npx @us-all/android-mcp-server
+npx @us-all/android-mcp
 ```
 
 ### 2. Docker
@@ -38,7 +43,7 @@ docker run --rm \
 ### 3. Build from source
 
 ```bash
-git clone <repo>
+git clone https://github.com/us-all/android-mcp-server.git
 cd android-mcp-server
 pnpm install
 pnpm run build
@@ -70,7 +75,7 @@ Add to your Claude Desktop configuration:
   "mcpServers": {
     "android": {
       "command": "npx",
-      "args": ["@us-all/android-mcp-server"],
+      "args": ["@us-all/android-mcp"],
       "env": {
         "ANDROID_MCP_ALLOW_WRITE": "true"
       }
@@ -89,7 +94,7 @@ Add to your project's `.mcp.json`:
     "android": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@us-all/android-mcp-server"],
+      "args": ["@us-all/android-mcp"],
       "env": {
         "ANDROID_MCP_ALLOW_WRITE": "true",
         "ANDROID_MCP_ALLOW_SHELL": "true"
@@ -226,12 +231,12 @@ Or from a local build:
 │  ┌─────────┐  ┌──────────────────────────────────┐   │
 │  │config.ts│  │          tools/                   │   │
 │  │ ADB path│  │  device.ts  ── 5 tools           │   │
-│  │ serial  │  │  apps.ts    ── 6 tools           │   │
-│  │ perms   │  │  ui.ts      ── 7 tools           │   │
+│  │ serial  │  │  apps.ts    ── 12 tools          │   │
+│  │ perms   │  │  ui.ts      ── 10 tools          │   │
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
 │               │  emulator.ts── 5 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 3 tools           │   │
+│  │ adb.ts  │  │  system.ts  ── 12 tools          │   │
 │  │ wrapper │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── error handling    │   │
 │               └──────────────────────────────────┘   │
@@ -250,7 +255,7 @@ Or from a local build:
 
 ## Tech Stack
 
-- **Runtime:** Node.js 18+
+- **Runtime:** Node.js 20+
 - **Language:** TypeScript 5.x (strict mode, ESM)
 - **MCP SDK:** @modelcontextprotocol/sdk 1.27+
 - **Validation:** zod 4.x

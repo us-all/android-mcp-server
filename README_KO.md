@@ -14,6 +14,11 @@ ADB 기반 Android 디바이스 관리, UI 자동화, logcat 디버깅, 에뮬�
 | 에뮬레이터 라이프사이클 (AVD 시작/중지/스냅샷) | — | ✓ |
 | 파일 관리 (push/pull) | — | ✓ |
 | 시스템 정보 (배터리, 네트워크, 설정) | — | ✓ |
+| 앱 데이터 초기화 & 권한 관리 | — | ✓ |
+| 화면 녹화 (시작/가져오기) | — | ✓ |
+| 포트 포워딩 (forward/reverse) | — | ✓ |
+| 디스플레이 크기/밀도 변경 | — | ✓ |
+| 브로드캐스트 인텐트 & 딥링크 테스트 | — | ✓ |
 | 2단계 보안 (쓰기 + 셸 게이팅) | — | ✓ |
 | 순수 ADB (Appium/uiautomator2 불필요) | — | ✓ |
 | TypeScript + 공식 MCP SDK | — | ✓ |
@@ -23,7 +28,7 @@ ADB 기반 Android 디바이스 관리, UI 자동화, logcat 디버깅, 에뮬�
 ### 1. npx (권장)
 
 ```bash
-npx @us-all/android-mcp-server
+npx @us-all/android-mcp
 ```
 
 ### 2. Docker
@@ -38,7 +43,7 @@ docker run --rm \
 ### 3. 소스에서 빌드
 
 ```bash
-git clone <repo>
+git clone https://github.com/us-all/android-mcp-server.git
 cd android-mcp-server
 pnpm install
 pnpm run build
@@ -70,7 +75,7 @@ Claude Desktop 설정에 추가:
   "mcpServers": {
     "android": {
       "command": "npx",
-      "args": ["@us-all/android-mcp-server"],
+      "args": ["@us-all/android-mcp"],
       "env": {
         "ANDROID_MCP_ALLOW_WRITE": "true"
       }
@@ -89,7 +94,7 @@ Claude Desktop 설정에 추가:
     "android": {
       "type": "stdio",
       "command": "npx",
-      "args": ["@us-all/android-mcp-server"],
+      "args": ["@us-all/android-mcp"],
       "env": {
         "ANDROID_MCP_ALLOW_WRITE": "true",
         "ANDROID_MCP_ALLOW_SHELL": "true"
@@ -99,26 +104,7 @@ Claude Desktop 설정에 추가:
 }
 ```
 
-로컬 빌드 사용 시:
-
-```json
-{
-  "mcpServers": {
-    "android": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "/path/to/android-mcp-server",
-      "env": {
-        "ANDROID_MCP_ALLOW_WRITE": "true",
-        "ANDROID_MCP_ALLOW_SHELL": "true"
-      }
-    }
-  }
-}
-```
-
-## 도구 (35)
+## 도구 (52)
 
 ### 디바이스 (5)
 
@@ -130,7 +116,7 @@ Claude Desktop 설정에 추가:
 | `connect-device` | TCP/IP (무선 ADB) 디바이스 연결 | W |
 | `disconnect-device` | TCP/IP 디바이스 연결 해제 | W |
 
-### 앱 관리 (6)
+### 앱 관리 (12)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -140,8 +126,14 @@ Claude Desktop 설정에 추가:
 | `uninstall-app` | 앱 삭제 (데이터 유지 옵션) | W |
 | `launch-app` | 패키지명으로 앱 실행 (특정 액티비티 지정 가능) | W |
 | `stop-app` | 앱 강제 종료 | W |
+| `clear-app-data` | 앱 데이터/캐시 전체 초기화 (테스트 격리) | W |
+| `grant-permission` | 런타임 권한 부여 (예: CAMERA) | W |
+| `revoke-permission` | 런타임 권한 해제 | W |
+| `open-url` | 디바이스에서 URL 열기 (http/https/딥링크) | W |
+| `send-broadcast` | 브로드캐스트 인텐트 전송 (옵션 extras 지원) | W |
+| `get-current-activity` | 현재 표시 중인 액티비티 및 윈도우 포커스 확인 | R |
 
-### UI 자동화 (7)
+### UI 자동화 (10)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -152,6 +144,9 @@ Claude Desktop 설정에 추가:
 | `swipe` | (x1,y1)에서 (x2,y2)로 스와이프 제스처 | W |
 | `input-text` | 텍스트 입력 (특수 문자 이스케이프) | W |
 | `press-key` | 키 이벤트: BACK, HOME, ENTER, VOLUME_UP 등 | W |
+| `drag-and-drop` | 한 지점에서 다른 지점으로 드래그 (리스트 정렬 등) | W |
+| `start-screen-recording` | 디바이스 화면 녹화 시작 (최대 180초) | W |
+| `pull-screen-recording` | 녹화된 영상을 로컬로 가져오기 | R |
 
 ### Logcat (4)
 
@@ -181,13 +176,21 @@ Claude Desktop 설정에 추가:
 | `push-file` | 로컬 파일을 디바이스로 업로드 | W |
 | `delete-file` | 디바이스 파일/디렉토리 삭제 | W |
 
-### 시스템 (3)
+### 시스템 (12)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
 | `get-battery-info` | 배터리 잔량, 충전 상태, 온도, 건강 상태 | R |
 | `get-network-info` | WiFi 상태, IP 주소, 연결 정보 | R |
 | `change-setting` | 시스템/보안/글로벌 설정 변경 | W |
+| `get-setting` | 시스템 설정 값 읽기 (system/secure/global) | R |
+| `set-display-size` | 디스플레이 해상도 변경 (반응형 테스트) | W |
+| `set-display-density` | 디스플레이 밀도(DPI) 변경 | W |
+| `keep-screen-on` | 충전 중 화면 꺼짐 방지 | W |
+| `port-forward` | 호스트 포트를 디바이스 포트로 포워딩 (adb forward) | W |
+| `reverse-forward` | 디바이스 포트를 호스트 포트로 역포워딩 (adb reverse) | W |
+| `list-forwards` | 활성 포트 포워드/리버스 목록 | R |
+| `remove-forward` | 특정 또는 전체 포트 포워드 제거 | W |
 
 ### 셸 (1)
 
@@ -209,12 +212,12 @@ Claude Desktop 설정에 추가:
 │  ┌─────────┐  ┌──────────────────────────────────┐   │
 │  │config.ts│  │          tools/                   │   │
 │  │ ADB 경로│  │  device.ts  ── 5 tools           │   │
-│  │ 시리얼  │  │  apps.ts    ── 6 tools           │   │
-│  │ 권한    │  │  ui.ts      ── 7 tools           │   │
+│  │ 시리얼  │  │  apps.ts    ── 12 tools          │   │
+│  │ 권한    │  │  ui.ts      ── 10 tools          │   │
 │  └─────────┘  │  logcat.ts  ── 4 tools           │   │
 │               │  emulator.ts── 5 tools           │   │
 │  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 3 tools           │   │
+│  │ adb.ts  │  │  system.ts  ── 12 tools          │   │
 │  │ 래퍼    │  │  shell.ts   ── 1 tool            │   │
 │  └─────────┘  │  utils.ts   ── 에러 핸들링       │   │
 │               └──────────────────────────────────┘   │
@@ -233,7 +236,7 @@ Claude Desktop 설정에 추가:
 
 ## 기술 스택
 
-- **런타임:** Node.js 18+
+- **런타임:** Node.js 20+
 - **언어:** TypeScript 5.x (strict mode, ESM)
 - **MCP SDK:** @modelcontextprotocol/sdk 1.27+
 - **검증:** zod 4.x
