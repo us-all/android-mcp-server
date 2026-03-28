@@ -1,5 +1,10 @@
 import { z } from "zod";
+import { execFile } from "node:child_process";
+import { promisify } from "node:util";
 import { adb, adbShell } from "../adb.js";
+import { config } from "../config.js";
+
+const execFileAsync = promisify(execFile);
 
 // --- Schemas ---
 
@@ -164,5 +169,88 @@ export async function getCpuInfo(params: z.infer<typeof getCpuInfoSchema>) {
   return {
     total: totalLine?.trim(),
     topProcesses: processes,
+  };
+}
+
+// --- v1.3.0 additions ---
+
+export const doctorSchema = z.object({});
+
+export async function doctor() {
+  const checks: Array<{ name: string; status: "ok" | "warn" | "fail"; detail: string }> = [];
+
+  // 1. ADB version
+  try {
+    const { stdout } = await execFileAsync(config.adbPath, ["version"]);
+    const version = stdout.match(/Android Debug Bridge version ([\d.]+)/);
+    checks.push({
+      name: "ADB",
+      status: "ok",
+      detail: version ? `v${version[1]}` : stdout.trim().split("\n")[0],
+    });
+  } catch {
+    checks.push({ name: "ADB", status: "fail", detail: `Not found at "${config.adbPath}"` });
+  }
+
+  // 2. Connected devices
+  try {
+    const output = await adb(["devices"]);
+    const devices = output.split("\n").filter((l) => l.includes("\tdevice")).length;
+    const unauthorized = output.split("\n").filter((l) => l.includes("unauthorized")).length;
+    checks.push({
+      name: "Devices",
+      status: devices > 0 ? "ok" : "fail",
+      detail: `${devices} connected${unauthorized ? `, ${unauthorized} unauthorized` : ""}`,
+    });
+  } catch (e) {
+    checks.push({ name: "Devices", status: "fail", detail: (e as Error).message });
+  }
+
+  // 3. ANDROID_HOME
+  checks.push({
+    name: "ANDROID_HOME",
+    status: config.androidHome ? "ok" : "warn",
+    detail: config.androidHome || "Not set (emulator tools may not work)",
+  });
+
+  // 4. Emulator
+  if (config.androidHome) {
+    try {
+      const path = await import("node:path");
+      const emuPath = path.default.join(config.androidHome, "emulator", "emulator");
+      await execFileAsync(emuPath, ["-list-avds"]);
+      checks.push({ name: "Emulator", status: "ok", detail: "Available" });
+    } catch {
+      checks.push({ name: "Emulator", status: "warn", detail: "Not installed or not in ANDROID_HOME" });
+    }
+  } else {
+    checks.push({ name: "Emulator", status: "warn", detail: "Skipped (ANDROID_HOME not set)" });
+  }
+
+  // 5. Write permission
+  checks.push({
+    name: "Write permission",
+    status: config.allowWrite ? "ok" : "warn",
+    detail: config.allowWrite ? "Enabled" : "Disabled (set ANDROID_MCP_ALLOW_WRITE=true)",
+  });
+
+  // 6. Shell permission
+  checks.push({
+    name: "Shell permission",
+    status: config.allowShell ? "ok" : "warn",
+    detail: config.allowShell ? "Enabled" : "Disabled (set ANDROID_MCP_ALLOW_SHELL=true)",
+  });
+
+  // 7. Target device info
+  if (config.serial) {
+    checks.push({ name: "Target device", status: "ok", detail: config.serial });
+  }
+
+  const allOk = checks.every((c) => c.status === "ok");
+  const hasFail = checks.some((c) => c.status === "fail");
+
+  return {
+    status: hasFail ? "FAIL" : allOk ? "OK" : "WARN",
+    checks,
   };
 }

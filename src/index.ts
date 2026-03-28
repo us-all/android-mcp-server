@@ -75,6 +75,10 @@ import {
   screenRecordPull,
   doubleTapSchema,
   doubleTap,
+  takeAnnotatedScreenshotSchema,
+  takeAnnotatedScreenshot,
+  tapElementSchema,
+  tapElement,
 } from "./tools/ui.js";
 
 // Logcat tools
@@ -174,6 +178,8 @@ import {
   getGfxInfo,
   getCpuInfoSchema,
   getCpuInfo,
+  doctorSchema,
+  doctor,
 } from "./tools/debug.js";
 
 // --- Server setup ---
@@ -182,7 +188,7 @@ await validateConfig();
 
 const server = new McpServer({
   name: "android-mcp-server",
-  version: "1.2.0",
+  version: "1.3.0",
 });
 
 // ========== Device tools ==========
@@ -571,6 +577,22 @@ server.tool(
   wrapToolHandler(removeForward),
 );
 
+// ========== v1.3.0 — Enhanced UI tools ==========
+
+server.tool(
+  "take-annotated-screenshot",
+  "Capture screenshot + interactive element map with numbered indexes. Use tap-element with the index to interact. Solves coordinate accuracy issues",
+  takeAnnotatedScreenshotSchema.shape,
+  wrapImageToolHandler(takeAnnotatedScreenshot),
+);
+
+server.tool(
+  "tap-element",
+  "Tap an interactive element by its index number from dump-ui-hierarchy or take-annotated-screenshot. More reliable than coordinate-based tap. Requires ANDROID_MCP_ALLOW_WRITE=true",
+  tapElementSchema.shape,
+  wrapToolHandler(tapElement),
+);
+
 // ========== v1.2.0 — App tools ==========
 
 server.tool(
@@ -698,6 +720,15 @@ server.tool(
   "Get CPU usage info with top consuming processes",
   getCpuInfoSchema.shape,
   wrapToolHandler(getCpuInfo),
+);
+
+// ========== v1.3.0 — Doctor ==========
+
+server.tool(
+  "doctor",
+  "Check environment health: ADB, devices, ANDROID_HOME, emulator, permissions. Run this first to diagnose setup issues",
+  doctorSchema.shape,
+  wrapToolHandler(doctor),
 );
 
 // --- Start server ---

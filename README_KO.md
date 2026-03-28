@@ -104,7 +104,7 @@ Claude Desktop 설정에 추가:
 }
 ```
 
-## 도구 (69)
+## 도구 (72)
 
 ### 디바이스 (5)
 
@@ -135,7 +135,7 @@ Claude Desktop 설정에 추가:
 | `is-app-installed` | 앱 설치 여부 확인 (boolean) | R |
 | `get-app-intents` | 앱의 인텐트 액션 및 딥링크 탐색 | R |
 
-### UI 자동화 (11)
+### UI 자동화 (13)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -150,6 +150,8 @@ Claude Desktop 설정에 추가:
 | `start-screen-recording` | 디바이스 화면 녹화 시작 (최대 180초) | W |
 | `pull-screen-recording` | 녹화된 영상을 로컬로 가져오기 | R |
 | `double-tap` | 화면 좌표에 더블 탭 | W |
+| `take-annotated-screenshot` | 스크린샷 + 번호 매핑된 인터랙티브 요소 목록 (좌표 정확도 향상) | R |
+| `tap-element` | 인덱스 번호로 요소 탭 (좌표 지정보다 정확) | W |
 
 ### Logcat (4)
 
@@ -205,7 +207,7 @@ Claude Desktop 설정에 추가:
 | `set-orientation` | 화면 방향 설정: portrait, landscape, auto | W |
 | `list-settings` | 네임스페이스의 전체 설정 목록 | R |
 
-### 디버그 (4)
+### 디버그 (5)
 
 | 도구 | 설명 | R/W |
 |------|------|-----|
@@ -213,6 +215,7 @@ Claude Desktop 설정에 추가:
 | `get-mem-info` | 메모리 사용량: 앱별 PSS/힙 또는 시스템 요약 | R |
 | `get-gfx-info` | GPU 렌더링: 프레임 수, 버벅임 비율, 지연 백분위 | R |
 | `get-cpu-info` | CPU 사용량 및 상위 프로세스 | R |
+| `doctor` | 환경 상태 진단: ADB, 디바이스, SDK, 권한 | R |
 
 ### 셸 (1)
 

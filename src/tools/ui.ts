@@ -368,3 +368,111 @@ export async function doubleTap(params: z.infer<typeof doubleTapSchema>) {
   await adbShell(`input tap ${params.x} ${params.y}`, opts);
   return { result: `Double tapped at (${params.x}, ${params.y})` };
 }
+
+// --- Annotated screenshot + UI map ---
+
+export const takeAnnotatedScreenshotSchema = z.object({
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export const tapElementSchema = z.object({
+  index: z
+    .coerce
+    .number()
+    .describe("Element index from dump-ui-hierarchy or take-annotated-screenshot result."),
+  serial: z
+    .string()
+    .optional()
+    .describe("Device serial number. Uses default device if omitted."),
+});
+
+export async function takeAnnotatedScreenshot(
+  params: z.infer<typeof takeAnnotatedScreenshotSchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+
+  // Capture screenshot and UI hierarchy in parallel
+  const [screenshotBuffer, _] = await Promise.all([
+    adbRawBuffer(["exec-out", "screencap", "-p"], opts),
+    adbShell("uiautomator dump /sdcard/window_dump.xml", opts),
+  ]);
+  const xml = await adbShell("cat /sdcard/window_dump.xml", opts);
+
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: "@_",
+  });
+
+  const parsed = parser.parse(xml);
+  const hierarchy = parsed?.hierarchy;
+  const elements: UiElement[] = [];
+  if (hierarchy) {
+    flattenNodes(hierarchy, elements, true);
+  }
+
+  // Build element map with numbered labels
+  const elementMap = elements.map((el, i) => ({
+    index: i,
+    class: el.class,
+    text: el.text ?? el.contentDesc ?? el.resourceId ?? "",
+    center: el.center,
+    bounds: el.bounds,
+    clickable: el.clickable,
+  }));
+
+  return {
+    base64: screenshotBuffer.toString("base64"),
+    mimeType: "image/png",
+    metadata: {
+      elementCount: elements.length,
+      elements: elementMap,
+      usage: "Use tap-element with the index number to interact with an element. Or use tap with center coordinates.",
+    },
+  };
+}
+
+export async function tapElement(
+  params: z.infer<typeof tapElementSchema>,
+) {
+  assertWriteAllowed();
+  const opts = params.serial ? { serial: params.serial } : undefined;
+
+  // Get current UI hierarchy to find the element
+  await adbShell("uiautomator dump /sdcard/window_dump.xml", opts);
+  const xml = await adbShell("cat /sdcard/window_dump.xml", opts);
+
+  const parser = new XMLParser({
+    ignoreAttributes: false,
+    attributeNamePrefix: "@_",
+  });
+
+  const parsed = parser.parse(xml);
+  const hierarchy = parsed?.hierarchy;
+  if (!hierarchy) throw new Error("Could not dump UI hierarchy");
+
+  const elements: UiElement[] = [];
+  flattenNodes(hierarchy, elements, true);
+
+  if (params.index < 0 || params.index >= elements.length) {
+    throw new Error(
+      `Element index ${params.index} out of range (0-${elements.length - 1})`,
+    );
+  }
+
+  const target = elements[params.index];
+  if (!target.center) {
+    throw new Error(`Element ${params.index} has no center coordinates`);
+  }
+
+  await adbShell(
+    `input tap ${target.center.x} ${target.center.y}`,
+    opts,
+  );
+
+  return {
+    result: `Tapped element [${params.index}] "${target.text ?? target.contentDesc ?? target.class}" at (${target.center.x}, ${target.center.y})`,
+  };
+}

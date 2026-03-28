@@ -123,7 +123,7 @@ Or from a local build:
 }
 ```
 
-## Tools (69)
+## Tools (72)
 
 ### Device (5)
 
@@ -154,7 +154,7 @@ Or from a local build:
 | `is-app-installed` | Check if an app is installed (boolean) | R |
 | `get-app-intents` | Discover intent actions and deep links for an app | R |
 
-### UI Automation (11)
+### UI Automation (13)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -169,6 +169,8 @@ Or from a local build:
 | `start-screen-recording` | Start recording device screen to video file (max 180s) | W |
 | `pull-screen-recording` | Pull recorded video from device to local filesystem | R |
 | `double-tap` | Double tap at screen coordinates | W |
+| `take-annotated-screenshot` | Screenshot + numbered interactive element map (solves coordinate accuracy) | R |
+| `tap-element` | Tap element by index number from hierarchy/annotated screenshot | W |
 
 ### Logcat (4)
 
@@ -224,7 +226,7 @@ Or from a local build:
 | `set-orientation` | Set orientation: portrait, landscape, or auto | W |
 | `list-settings` | List all settings in a namespace | R |
 
-### Debug (4)
+### Debug (5)
 
 | Tool | Description | R/W |
 |------|-------------|-----|
@@ -232,6 +234,7 @@ Or from a local build:
 | `get-mem-info` | Memory usage: per-app PSS/heap or system summary | R |
 | `get-gfx-info` | GPU rendering: frame count, jank %, percentile latencies | R |
 | `get-cpu-info` | CPU usage with top consuming processes | R |
+| `doctor` | Environment health check: ADB, devices, SDK, permissions | R |
 
 ### Shell (1)
 
