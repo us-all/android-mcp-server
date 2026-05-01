@@ -185,6 +185,7 @@ import {
 // --- Server setup ---
 
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
+import { registerResources } from "./resources.js";
 
 await validateConfig();
 
@@ -771,6 +772,9 @@ tool(
   searchToolsSchema.shape,
   wrapToolHandler(searchTools),
 );
+
+// --- MCP Resources (android:// URI scheme) ---
+registerResources(server);
 
 // --- Start server ---
 
