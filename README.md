@@ -63,6 +63,22 @@ pnpm start
 | `ANDROID_SERIAL` | No | auto (single device) | Target device serial number |
 | `ANDROID_MCP_ALLOW_WRITE` | No | `false` | Enable write operations (install, tap, push, etc.) |
 | `ANDROID_MCP_ALLOW_SHELL` | No | `false` | Enable arbitrary shell command execution |
+| `ANDROID_TOOLS` | No | — | Allowlist of tool categories (e.g. `device,ui,apps`). Categories: `device`, `apps`, `ui`, `logcat`, `emulator`, `files`, `system`, `debug`, `shell`. |
+| `ANDROID_DISABLE` | No | — | Denylist of categories. Ignored when `ANDROID_TOOLS` is set. |
+
+### Token Efficiency
+
+With 73 tools, naive setup loads ~9.2K tokens of tool schema. Category toggles drop further.
+
+**Measured impact** (from `tools/list` JSON length, ~4 chars/token):
+
+| Scenario | Tools loaded | Schema tokens | vs default |
+|----------|--------------|---------------|-----------|
+| default (all categories) | 73 | **9,200** | — |
+| typical (`ANDROID_TOOLS=device,ui,apps,logcat`) | 37 | 5,000 | −46% |
+| narrow (`ANDROID_TOOLS=device,ui`) | 19 | **2,500** | **−73%** |
+
+Plus `search-tools` meta-tool (always enabled) for tool discovery.
 
 ### Read-Only Mode (default)
 
