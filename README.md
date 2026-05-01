@@ -1,10 +1,10 @@
 # Android MCP Server
 
-[![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md)
+[![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
 Android MCP server — ADB-based device management, UI automation, logcat debugging, emulator control, and more via the [Model Context Protocol](https://modelcontextprotocol.io/).
 
-> Authored to the [@us-all MCP Standard](https://github.com/us-all/datadog-mcp-server/blob/master/STANDARD.md) — token-efficient by design.
+> Authored to the [@us-all MCP Standard](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md) — token-efficient by design.
 
 **Android-only specialist.** Pure ADB, 72 tools, no Appium/uiautomator2 dependency. If you need iOS + Android cross-platform automation, use [mobile-next/mobile-mcp](https://github.com/mobile-next/mobile-mcp). Use this server when you want deep Android coverage (logcat, emulator AVDs, broadcast intents, screen recording, 2-tier security gating) without the extra abstraction layer.
 
