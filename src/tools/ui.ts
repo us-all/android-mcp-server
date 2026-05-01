@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
 import { adb, adbShell, adbRawBuffer } from "../adb.js";
-import { assertWriteAllowed } from "./utils.js";
+import { assertWriteAllowed, shellEscape, validateKeycode } from "./utils.js";
 
 // --- Schemas ---
 
@@ -236,8 +236,9 @@ export async function swipe(params: z.infer<typeof swipeSchema>) {
 export async function inputText(params: z.infer<typeof inputTextSchema>) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
-  const escaped = params.text.replace(/ /g, "%s").replace(/'/g, "\\'");
-  await adbShell(`input text '${escaped}'`, opts);
+  // Android `input text` requires %s for spaces; shellEscape handles all metacharacters
+  const encoded = params.text.replace(/ /g, "%s");
+  await adbShell(`input text ${shellEscape(encoded)}`, opts);
   return { result: `Typed: "${params.text}"` };
 }
 
