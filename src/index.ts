@@ -185,6 +185,7 @@ import {
 // --- Server setup ---
 
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
+import { analyzeAppSchema, analyzeApp } from "./tools/aggregations.js";
 import { registerResources } from "./resources.js";
 
 await validateConfig();
@@ -764,6 +765,16 @@ tool(
 );
 
 // ========== Meta tools (always enabled) ==========
+// --- Aggregation tools (round-trip elimination) ---
+currentCategory = "apps";
+
+tool(
+  "analyze-app",
+  "Aggregated app view: package info + memory usage in one call. Replaces 2-3 round-trips of get-package-info + get-mem-info.",
+  analyzeAppSchema.shape,
+  wrapToolHandler(analyzeApp),
+);
+
 currentCategory = "meta";
 
 tool(
