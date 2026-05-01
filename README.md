@@ -2,6 +2,8 @@
 
 Android MCP server — ADB-based device management, UI automation, logcat debugging, emulator control, and more via the [Model Context Protocol](https://modelcontextprotocol.io/).
 
+**Android-only specialist.** Pure ADB, 72 tools, no Appium/uiautomator2 dependency. If you need iOS + Android cross-platform automation, use [mobile-next/mobile-mcp](https://github.com/mobile-next/mobile-mcp). Use this server when you want deep Android coverage (logcat, emulator AVDs, broadcast intents, screen recording, 2-tier security gating) without the extra abstraction layer.
+
 [한국어](./README_KO.md)
 
 ## Why This Server?
