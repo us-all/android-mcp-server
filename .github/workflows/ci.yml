@@ -26,3 +26,8 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
       - run: pnpm test
+      - name: Token stats (regression guard, Node 22 only)
+        if: matrix.node-version == 22
+        run: pnpm run token-stats
+        env:
+          TOKEN_BUDGET: 11000
