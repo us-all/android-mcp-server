@@ -184,6 +184,8 @@ import {
 
 // --- Server setup ---
 
+import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
+
 await validateConfig();
 
 const server = new McpServer({
@@ -191,37 +193,49 @@ const server = new McpServer({
   version: "1.3.0",
 });
 
-// ========== Device tools ==========
+// --- Tool registration with category filtering (ANDROID_TOOLS / ANDROID_DISABLE) ---
+let currentCategory: Category = "device";
 
-server.tool(
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function tool(name: string, description: string, schema: any, handler: any): void {
+  registry.register(name, description, currentCategory);
+  if (registry.isEnabled(currentCategory)) {
+    server.tool(name, description, schema, handler);
+  }
+}
+
+// ========== Device tools ==========
+currentCategory = "device";
+
+tool(
   "list-devices",
   "List all connected Android devices and emulators with their status and details",
   listDevicesSchema.shape,
   wrapToolHandler(listDevices),
 );
 
-server.tool(
+tool(
   "get-device-info",
   "Get detailed device information including model, brand, Android version, SDK version, display density and size",
   getDeviceInfoSchema.shape,
   wrapToolHandler(getDeviceInfo),
 );
 
-server.tool(
+tool(
   "get-device-properties",
   "Get Android system properties (getprop). Optionally filter by prefix like 'ro.build' or 'ro.product'",
   getDevicePropertiesSchema.shape,
   wrapToolHandler(getDeviceProperties),
 );
 
-server.tool(
+tool(
   "connect-device",
   "Connect to a device over TCP/IP (wireless ADB). Requires ANDROID_MCP_ALLOW_WRITE=true",
   connectDeviceSchema.shape,
   wrapToolHandler(connectDevice),
 );
 
-server.tool(
+tool(
   "disconnect-device",
   "Disconnect a TCP/IP device or all TCP/IP devices. Requires ANDROID_MCP_ALLOW_WRITE=true",
   disconnectDeviceSchema.shape,
@@ -229,43 +243,44 @@ server.tool(
 );
 
 // ========== App tools ==========
+currentCategory = "apps";
 
-server.tool(
+tool(
   "list-packages",
   "List installed packages on the device. Filter by name or type (all, system, third-party)",
   listPackagesSchema.shape,
   wrapToolHandler(listPackages),
 );
 
-server.tool(
+tool(
   "get-package-info",
   "Get detailed package info: version, SDK targets, install time, permissions",
   getPackageInfoSchema.shape,
   wrapToolHandler(getPackageInfo),
 );
 
-server.tool(
+tool(
   "install-app",
   "Install an APK file on the device. Requires ANDROID_MCP_ALLOW_WRITE=true",
   installAppSchema.shape,
   wrapToolHandler(installApp),
 );
 
-server.tool(
+tool(
   "uninstall-app",
   "Uninstall an app from the device. Requires ANDROID_MCP_ALLOW_WRITE=true",
   uninstallAppSchema.shape,
   wrapToolHandler(uninstallApp),
 );
 
-server.tool(
+tool(
   "launch-app",
   "Launch an app by package name. Optionally specify activity. Requires ANDROID_MCP_ALLOW_WRITE=true",
   launchAppSchema.shape,
   wrapToolHandler(launchApp),
 );
 
-server.tool(
+tool(
   "stop-app",
   "Force stop an app by package name. Requires ANDROID_MCP_ALLOW_WRITE=true",
   stopAppSchema.shape,
@@ -273,50 +288,51 @@ server.tool(
 );
 
 // ========== UI tools ==========
+currentCategory = "ui";
 
-server.tool(
+tool(
   "take-screenshot",
   "Capture a screenshot of the device screen. Returns a PNG image",
   takeScreenshotSchema.shape,
   wrapImageToolHandler(takeScreenshot),
 );
 
-server.tool(
+tool(
   "dump-ui-hierarchy",
   "Dump the UI accessibility tree. Compact mode (default) returns only interactive elements with coordinates for token efficiency",
   dumpUiHierarchySchema.shape,
   wrapToolHandler(dumpUiHierarchy),
 );
 
-server.tool(
+tool(
   "tap",
   "Tap at specific screen coordinates. Requires ANDROID_MCP_ALLOW_WRITE=true",
   tapSchema.shape,
   wrapToolHandler(tap),
 );
 
-server.tool(
+tool(
   "long-press",
   "Long press at specific screen coordinates. Requires ANDROID_MCP_ALLOW_WRITE=true",
   longPressSchema.shape,
   wrapToolHandler(longPress),
 );
 
-server.tool(
+tool(
   "swipe",
   "Swipe from one point to another. Requires ANDROID_MCP_ALLOW_WRITE=true",
   swipeSchema.shape,
   wrapToolHandler(swipe),
 );
 
-server.tool(
+tool(
   "input-text",
   "Type text on the device. Focus an input field first using tap. Requires ANDROID_MCP_ALLOW_WRITE=true",
   inputTextSchema.shape,
   wrapToolHandler(inputText),
 );
 
-server.tool(
+tool(
   "press-key",
   "Press a key event (BACK, HOME, ENTER, VOLUME_UP, etc). Requires ANDROID_MCP_ALLOW_WRITE=true",
   pressKeySchema.shape,
@@ -324,29 +340,30 @@ server.tool(
 );
 
 // ========== Logcat tools ==========
+currentCategory = "logcat";
 
-server.tool(
+tool(
   "get-logcat",
   "Get recent logcat output. Filter by tag, priority level, and number of lines",
   getLogcatSchema.shape,
   wrapToolHandler(getLogcat),
 );
 
-server.tool(
+tool(
   "clear-logcat",
   "Clear the logcat buffer. Requires ANDROID_MCP_ALLOW_WRITE=true",
   clearLogcatSchema.shape,
   wrapToolHandler(clearLogcat),
 );
 
-server.tool(
+tool(
   "search-logcat",
   "Search logcat for a text pattern. Supports case-sensitive and case-insensitive search",
   searchLogcatSchema.shape,
   wrapToolHandler(searchLogcat),
 );
 
-server.tool(
+tool(
   "get-crash-logs",
   "Get crash logs from the device. Optionally filter by package name",
   getCrashLogsSchema.shape,
@@ -354,36 +371,37 @@ server.tool(
 );
 
 // ========== Emulator tools ==========
+currentCategory = "emulator";
 
-server.tool(
+tool(
   "list-avds",
   "List available Android Virtual Devices (AVDs) that can be started",
   listAvdsSchema.shape,
   wrapToolHandler(listAvds),
 );
 
-server.tool(
+tool(
   "start-emulator",
   "Start an Android emulator by AVD name. Supports headless mode and data wipe. Requires ANDROID_MCP_ALLOW_WRITE=true",
   startEmulatorSchema.shape,
   wrapToolHandler(startEmulator),
 );
 
-server.tool(
+tool(
   "stop-emulator",
   "Stop a running Android emulator. Requires ANDROID_MCP_ALLOW_WRITE=true",
   stopEmulatorSchema.shape,
   wrapToolHandler(stopEmulator),
 );
 
-server.tool(
+tool(
   "list-snapshots",
   "List available emulator snapshots",
   listSnapshotsSchema.shape,
   wrapToolHandler(listSnapshots),
 );
 
-server.tool(
+tool(
   "load-snapshot",
   "Load an emulator snapshot. Requires ANDROID_MCP_ALLOW_WRITE=true",
   loadSnapshotSchema.shape,
@@ -391,29 +409,30 @@ server.tool(
 );
 
 // ========== File tools ==========
+currentCategory = "files";
 
-server.tool(
+tool(
   "list-files",
   "List files on the device at a given path. Supports recursive listing",
   listFilesSchema.shape,
   wrapToolHandler(listFiles),
 );
 
-server.tool(
+tool(
   "pull-file",
   "Pull (download) a file from the device to local filesystem",
   pullFileSchema.shape,
   wrapToolHandler(pullFile),
 );
 
-server.tool(
+tool(
   "push-file",
   "Push (upload) a local file to the device. Requires ANDROID_MCP_ALLOW_WRITE=true",
   pushFileSchema.shape,
   wrapToolHandler(pushFile),
 );
 
-server.tool(
+tool(
   "delete-file",
   "Delete a file or directory on the device. Requires ANDROID_MCP_ALLOW_WRITE=true",
   deleteFileSchema.shape,
@@ -421,8 +440,9 @@ server.tool(
 );
 
 // ========== Shell tools ==========
+currentCategory = "shell";
 
-server.tool(
+tool(
   "execute-shell",
   "Execute an arbitrary ADB shell command. Requires ANDROID_MCP_ALLOW_SHELL=true (separate from write permission for security)",
   executeShellSchema.shape,
@@ -430,22 +450,23 @@ server.tool(
 );
 
 // ========== System tools ==========
+currentCategory = "system";
 
-server.tool(
+tool(
   "get-battery-info",
   "Get battery status including level, charging state, temperature, and health",
   getBatteryInfoSchema.shape,
   wrapToolHandler(getBatteryInfo),
 );
 
-server.tool(
+tool(
   "get-network-info",
   "Get network information including WiFi status, IP address, and connectivity details",
   getNetworkInfoSchema.shape,
   wrapToolHandler(getNetworkInfo),
 );
 
-server.tool(
+tool(
   "change-setting",
   "Change an Android system setting (system/secure/global namespace). Requires ANDROID_MCP_ALLOW_WRITE=true",
   changeSettingSchema.shape,
@@ -453,43 +474,44 @@ server.tool(
 );
 
 // ========== v1.1.0 — App tools ==========
+currentCategory = "apps";
 
-server.tool(
+tool(
   "clear-app-data",
   "Clear all data and cache for an app (equivalent to factory reset for the app). Requires ANDROID_MCP_ALLOW_WRITE=true",
   clearAppDataSchema.shape,
   wrapToolHandler(clearAppData),
 );
 
-server.tool(
+tool(
   "grant-permission",
   "Grant a runtime permission to an app. Example: android.permission.CAMERA. Requires ANDROID_MCP_ALLOW_WRITE=true",
   grantPermissionSchema.shape,
   wrapToolHandler(grantPermission),
 );
 
-server.tool(
+tool(
   "revoke-permission",
   "Revoke a runtime permission from an app. Requires ANDROID_MCP_ALLOW_WRITE=true",
   revokePermissionSchema.shape,
   wrapToolHandler(revokePermission),
 );
 
-server.tool(
+tool(
   "open-url",
   "Open a URL on the device browser. Supports http/https and deep link URIs. Requires ANDROID_MCP_ALLOW_WRITE=true",
   openUrlSchema.shape,
   wrapToolHandler(openUrl),
 );
 
-server.tool(
+tool(
   "send-broadcast",
   "Send a broadcast intent with optional extras. Example action: 'android.intent.action.BOOT_COMPLETED'. Requires ANDROID_MCP_ALLOW_WRITE=true",
   sendBroadcastSchema.shape,
   wrapToolHandler(sendBroadcast),
 );
 
-server.tool(
+tool(
   "get-current-activity",
   "Get the currently visible (resumed) activity and window focus information",
   getCurrentActivitySchema.shape,
@@ -497,22 +519,23 @@ server.tool(
 );
 
 // ========== v1.1.0 — UI tools ==========
+currentCategory = "ui";
 
-server.tool(
+tool(
   "drag-and-drop",
   "Drag from one point to another (e.g. reorder list items). Requires ANDROID_MCP_ALLOW_WRITE=true",
   dragAndDropSchema.shape,
   wrapToolHandler(dragAndDrop),
 );
 
-server.tool(
+tool(
   "start-screen-recording",
   "Start recording the device screen to a video file (max 180s). Recording runs in background. Requires ANDROID_MCP_ALLOW_WRITE=true",
   screenRecordStartSchema.shape,
   wrapToolHandler(screenRecordStart),
 );
 
-server.tool(
+tool(
   "pull-screen-recording",
   "Pull a screen recording file from the device to local filesystem",
   screenRecordPullSchema.shape,
@@ -520,57 +543,58 @@ server.tool(
 );
 
 // ========== v1.1.0 — System tools ==========
+currentCategory = "system";
 
-server.tool(
+tool(
   "get-setting",
   "Read an Android system setting value from system/secure/global namespace",
   getSettingSchema.shape,
   wrapToolHandler(getSetting),
 );
 
-server.tool(
+tool(
   "set-display-size",
   "Override display resolution (wm size). Omit width/height to reset to default. Requires ANDROID_MCP_ALLOW_WRITE=true",
   setDisplaySizeSchema.shape,
   wrapToolHandler(setDisplaySize),
 );
 
-server.tool(
+tool(
   "set-display-density",
   "Override display density in DPI (wm density). Omit dpi to reset to default. Requires ANDROID_MCP_ALLOW_WRITE=true",
   setDisplayDensitySchema.shape,
   wrapToolHandler(setDisplayDensity),
 );
 
-server.tool(
+tool(
   "keep-screen-on",
   "Keep the device screen on while charging (prevents screen timeout). Requires ANDROID_MCP_ALLOW_WRITE=true",
   keepScreenOnSchema.shape,
   wrapToolHandler(keepScreenOn),
 );
 
-server.tool(
+tool(
   "port-forward",
   "Forward a host port to a device port (adb forward). Useful for connecting to app servers. Requires ANDROID_MCP_ALLOW_WRITE=true",
   portForwardSchema.shape,
   wrapToolHandler(portForward),
 );
 
-server.tool(
+tool(
   "reverse-forward",
   "Reverse forward a device port to a host port (adb reverse). Lets device access host services. Requires ANDROID_MCP_ALLOW_WRITE=true",
   reverseForwardSchema.shape,
   wrapToolHandler(reverseForward),
 );
 
-server.tool(
+tool(
   "list-forwards",
   "List all active port forwards and reverse forwards",
   listForwardsSchema.shape,
   wrapToolHandler(listForwards),
 );
 
-server.tool(
+tool(
   "remove-forward",
   "Remove a specific port forward or all forwards/reverses. Requires ANDROID_MCP_ALLOW_WRITE=true",
   removeForwardSchema.shape,
@@ -578,15 +602,16 @@ server.tool(
 );
 
 // ========== v1.3.0 — Enhanced UI tools ==========
+currentCategory = "ui";
 
-server.tool(
+tool(
   "take-annotated-screenshot",
   "Capture screenshot + interactive element map with numbered indexes. Use tap-element with the index to interact. Solves coordinate accuracy issues",
   takeAnnotatedScreenshotSchema.shape,
   wrapImageToolHandler(takeAnnotatedScreenshot),
 );
 
-server.tool(
+tool(
   "tap-element",
   "Tap an interactive element by its index number from dump-ui-hierarchy or take-annotated-screenshot. More reliable than coordinate-based tap. Requires ANDROID_MCP_ALLOW_WRITE=true",
   tapElementSchema.shape,
@@ -594,15 +619,16 @@ server.tool(
 );
 
 // ========== v1.2.0 — App tools ==========
+currentCategory = "apps";
 
-server.tool(
+tool(
   "is-app-installed",
   "Check if an app is installed on the device (returns boolean)",
   isAppInstalledSchema.shape,
   wrapToolHandler(isAppInstalled),
 );
 
-server.tool(
+tool(
   "get-app-intents",
   "Discover intent actions and deep links supported by an app",
   getAppIntentsSchema.shape,
@@ -610,8 +636,9 @@ server.tool(
 );
 
 // ========== v1.2.0 — UI tools ==========
+currentCategory = "ui";
 
-server.tool(
+tool(
   "double-tap",
   "Double tap at specific screen coordinates. Requires ANDROID_MCP_ALLOW_WRITE=true",
   doubleTapSchema.shape,
@@ -619,15 +646,16 @@ server.tool(
 );
 
 // ========== v1.2.0 — Emulator tools ==========
+currentCategory = "emulator";
 
-server.tool(
+tool(
   "save-snapshot",
   "Save the current emulator state as a named snapshot. Requires ANDROID_MCP_ALLOW_WRITE=true",
   saveSnapshotSchema.shape,
   wrapToolHandler(saveSnapshot),
 );
 
-server.tool(
+tool(
   "delete-snapshot",
   "Delete an emulator snapshot. Requires ANDROID_MCP_ALLOW_WRITE=true",
   deleteSnapshotSchema.shape,
@@ -635,57 +663,58 @@ server.tool(
 );
 
 // ========== v1.2.0 — System tools ==========
+currentCategory = "system";
 
-server.tool(
+tool(
   "toggle-wifi",
   "Enable or disable WiFi. Requires ANDROID_MCP_ALLOW_WRITE=true",
   toggleWifiSchema.shape,
   wrapToolHandler(toggleWifi),
 );
 
-server.tool(
+tool(
   "toggle-mobile-data",
   "Enable or disable mobile data. Requires ANDROID_MCP_ALLOW_WRITE=true",
   toggleMobileDataSchema.shape,
   wrapToolHandler(toggleMobileData),
 );
 
-server.tool(
+tool(
   "open-notification",
   "Open the notification/status bar panel. Requires ANDROID_MCP_ALLOW_WRITE=true",
   openNotificationSchema.shape,
   wrapToolHandler(openNotification),
 );
 
-server.tool(
+tool(
   "lock-device",
   "Lock the device screen (press power button). Requires ANDROID_MCP_ALLOW_WRITE=true",
   lockDeviceSchema.shape,
   wrapToolHandler(lockDevice),
 );
 
-server.tool(
+tool(
   "unlock-device",
   "Wake up and unlock the device. Optionally enter PIN/password. Requires ANDROID_MCP_ALLOW_WRITE=true",
   unlockDeviceSchema.shape,
   wrapToolHandler(unlockDevice),
 );
 
-server.tool(
+tool(
   "get-orientation",
   "Get current screen orientation and auto-rotate setting",
   getOrientationSchema.shape,
   wrapToolHandler(getOrientation),
 );
 
-server.tool(
+tool(
   "set-orientation",
   "Set screen orientation to portrait, landscape, or auto-rotate. Requires ANDROID_MCP_ALLOW_WRITE=true",
   setOrientationSchema.shape,
   wrapToolHandler(setOrientation),
 );
 
-server.tool(
+tool(
   "list-settings",
   "List all settings in a namespace (system/secure/global)",
   listSettingsSchema.shape,
@@ -693,29 +722,30 @@ server.tool(
 );
 
 // ========== v1.2.0 — Debug tools ==========
+currentCategory = "debug";
 
-server.tool(
+tool(
   "bugreport",
   "Generate a full Android bugreport zip file. Takes up to 2 minutes",
   bugreportSchema.shape,
   wrapToolHandler(bugreport),
 );
 
-server.tool(
+tool(
   "get-mem-info",
   "Get memory usage info. Per-app (PSS, heap, views) or system summary (RAM, top consumers)",
   getMemInfoSchema.shape,
   wrapToolHandler(getMemInfo),
 );
 
-server.tool(
+tool(
   "get-gfx-info",
   "Get GPU rendering performance: frame count, jank percentage, percentile latencies",
   getGfxInfoSchema.shape,
   wrapToolHandler(getGfxInfo),
 );
 
-server.tool(
+tool(
   "get-cpu-info",
   "Get CPU usage info with top consuming processes",
   getCpuInfoSchema.shape,
@@ -723,12 +753,23 @@ server.tool(
 );
 
 // ========== v1.3.0 — Doctor ==========
+currentCategory = "debug";
 
-server.tool(
+tool(
   "doctor",
   "Check environment health: ADB, devices, ANDROID_HOME, emulator, permissions. Run this first to diagnose setup issues",
   doctorSchema.shape,
   wrapToolHandler(doctor),
+);
+
+// ========== Meta tools (always enabled) ==========
+currentCategory = "meta";
+
+tool(
+  "search-tools",
+  "Discover available tools by natural language query. Returns matching tool names + descriptions across all categories. Use this first to navigate the 72+ tool surface efficiently.",
+  searchToolsSchema.shape,
+  wrapToolHandler(searchTools),
 );
 
 // --- Start server ---
