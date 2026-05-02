@@ -17,7 +17,7 @@ export const listPackagesSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getPackageInfoSchema = z.object({
@@ -27,7 +27,7 @@ export const getPackageInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const installAppSchema = z.object({
@@ -40,7 +40,7 @@ export const installAppSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const uninstallAppSchema = z.object({
@@ -55,7 +55,7 @@ export const uninstallAppSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const launchAppSchema = z.object({
@@ -71,7 +71,7 @@ export const launchAppSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const stopAppSchema = z.object({
@@ -81,7 +81,7 @@ export const stopAppSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 // --- Handlers ---
@@ -223,7 +223,7 @@ export const clearAppDataSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const grantPermissionSchema = z.object({
@@ -238,7 +238,7 @@ export const grantPermissionSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const revokePermissionSchema = z.object({
@@ -253,7 +253,7 @@ export const revokePermissionSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const openUrlSchema = z.object({
@@ -263,7 +263,7 @@ export const openUrlSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const sendBroadcastSchema = z.object({
@@ -276,7 +276,7 @@ export const sendBroadcastSchema = z.object({
     .string()
     .optional()
     .describe(
-      "Extra key-value pairs as string. Example: '--es key value --ei count 5'. Supported: --es (string), --ei (int), --ez (boolean), --ef (float)",
+      "Extras flags, e.g. '--es key val --ei count 5'. Supports --es/--ei/--ez/--ef.",
     ),
   component: z
     .string()
@@ -287,14 +287,14 @@ export const sendBroadcastSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getCurrentActivitySchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function clearAppData(
@@ -390,7 +390,7 @@ export const isAppInstalledSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getAppIntentsSchema = z.object({
@@ -400,7 +400,7 @@ export const getAppIntentsSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function isAppInstalled(

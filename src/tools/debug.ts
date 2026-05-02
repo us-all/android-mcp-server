@@ -15,7 +15,7 @@ export const bugreportSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getMemInfoSchema = z.object({
@@ -28,7 +28,7 @@ export const getMemInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getGfxInfoSchema = z.object({
@@ -38,14 +38,14 @@ export const getGfxInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getCpuInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 // --- Handlers ---

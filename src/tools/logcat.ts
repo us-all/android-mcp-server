@@ -24,14 +24,14 @@ export const getLogcatSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const clearLogcatSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const searchLogcatSchema = z.object({
@@ -50,7 +50,7 @@ export const searchLogcatSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getCrashLogsSchema = z.object({
@@ -63,7 +63,7 @@ export const getCrashLogsSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 // --- Handlers ---

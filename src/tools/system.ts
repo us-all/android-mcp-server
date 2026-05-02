@@ -8,14 +8,14 @@ export const getBatteryInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getNetworkInfoSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const changeSettingSchema = z.object({
@@ -27,7 +27,7 @@ export const changeSettingSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 // --- Handlers ---
@@ -117,7 +117,7 @@ export const getSettingSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const setDisplaySizeSchema = z.object({
@@ -126,7 +126,7 @@ export const setDisplaySizeSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const setDisplayDensitySchema = z.object({
@@ -134,7 +134,7 @@ export const setDisplayDensitySchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const keepScreenOnSchema = z.object({
@@ -144,7 +144,7 @@ export const keepScreenOnSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const portForwardSchema = z.object({
@@ -153,7 +153,7 @@ export const portForwardSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const reverseForwardSchema = z.object({
@@ -162,14 +162,14 @@ export const reverseForwardSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const listForwardsSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const removeForwardSchema = z.object({
@@ -180,7 +180,7 @@ export const removeForwardSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function getSetting(
@@ -299,7 +299,7 @@ export const toggleWifiSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const toggleMobileDataSchema = z.object({
@@ -307,21 +307,21 @@ export const toggleMobileDataSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const openNotificationSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const lockDeviceSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const unlockDeviceSchema = z.object({
@@ -332,14 +332,14 @@ export const unlockDeviceSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const getOrientationSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const setOrientationSchema = z.object({
@@ -349,7 +349,7 @@ export const setOrientationSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const listSettingsSchema = z.object({
@@ -359,7 +359,7 @@ export const listSettingsSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function toggleWifi(

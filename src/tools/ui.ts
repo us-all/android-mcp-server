@@ -9,7 +9,7 @@ export const takeScreenshotSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const dumpUiHierarchySchema = z.object({
@@ -23,7 +23,7 @@ export const dumpUiHierarchySchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const tapSchema = z.object({
@@ -32,7 +32,7 @@ export const tapSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const longPressSchema = z.object({
@@ -47,7 +47,7 @@ export const longPressSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const swipeSchema = z.object({
@@ -64,7 +64,7 @@ export const swipeSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const inputTextSchema = z.object({
@@ -72,19 +72,19 @@ export const inputTextSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const pressKeySchema = z.object({
   key: z
     .string()
     .describe(
-      "Key to press. Examples: 'KEYCODE_BACK', 'KEYCODE_HOME', 'KEYCODE_ENTER', 'KEYCODE_VOLUME_UP'. Full list: https://developer.android.com/reference/android/view/KeyEvent",
+      "Key to press, e.g. 'KEYCODE_BACK', 'KEYCODE_HOME', 'KEYCODE_ENTER'.",
     ),
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 // --- Helpers ---
@@ -268,7 +268,7 @@ export const dragAndDropSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const screenRecordStartSchema = z.object({
@@ -290,7 +290,7 @@ export const screenRecordStartSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const screenRecordPullSchema = z.object({
@@ -305,7 +305,7 @@ export const screenRecordPullSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function dragAndDrop(
@@ -359,7 +359,7 @@ export const doubleTapSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function doubleTap(params: z.infer<typeof doubleTapSchema>) {
@@ -376,7 +376,7 @@ export const takeAnnotatedScreenshotSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export const tapElementSchema = z.object({
@@ -387,7 +387,7 @@ export const tapElementSchema = z.object({
   serial: z
     .string()
     .optional()
-    .describe("Device serial number. Uses default device if omitted."),
+    .describe("Device serial (default: auto)"),
 });
 
 export async function takeAnnotatedScreenshot(
