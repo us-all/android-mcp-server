@@ -72,9 +72,11 @@ pnpm token-stats        # tools/list 토큰 측정
 - **input validation**: setting key/value, package name, permission, component, action, broadcast extras 등 정규식 화이트리스트.
 - **device path traversal 방지**: 절대 경로 강제 + `..` 차단 + shell metachar 차단.
 
-## 최근 변경사항 (2026-05-01)
+## 최근 변경사항
 
-- **v1.7.0**: `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~177 lines 절감.
+- **v1.7.2** (2026-05-02): 트랜시티브 의존성 보안 패치 — `fast-xml-parser ^5.7.0`(GHSA-gh4j-gqv2-49f6), `pnpm.overrides`로 `vite ^8.0.5`(GHSA-v2wj-q39q-566r·GHSA-p9ff-h696-f583 high) + `@hono/node-server >=1.19.13`(GHSA-92pp-h63x-v22m). 코드 변경 0줄.
+- **v1.7.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` (text) 본문 제거, `createWrapToolHandler` factory로 위임. `errorExtractors`(WriteBlockedError·ShellBlockedError → passthrough, ADB error `{code,stderr}` → structured)만 명시. `wrapImageToolHandler`는 Android 전용이라 로컬 유지.
+- **v1.7.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~177 lines 절감.
 - **v1.6.1**: 추가 MCP Resources (`android://app/{packageName}`).
 - **v1.6.0**: `analyze-app` 어그리게이션 도구 (package info + memory).
 - **v1.5.0**: MCP Resources (android:// URI) — devices, device.
