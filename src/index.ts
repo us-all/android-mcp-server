@@ -185,7 +185,12 @@ import {
 // --- Server setup ---
 
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
-import { analyzeAppSchema, analyzeApp } from "./tools/aggregations.js";
+import {
+  analyzeAppSchema,
+  analyzeApp,
+  deviceHealthSchema,
+  deviceHealth,
+} from "./tools/aggregations.js";
 import { registerResources } from "./resources.js";
 import { registerPrompts } from "./prompts.js";
 
@@ -774,6 +779,15 @@ tool(
   "Aggregated app view: package info + memory usage in one call. Replaces 2-3 round-trips of get-package-info + get-mem-info.",
   analyzeAppSchema.shape,
   wrapToolHandler(analyzeApp),
+);
+
+currentCategory = "device";
+
+tool(
+  "device-health",
+  "Aggregated device health snapshot: battery + system memory + cpu + network in one call. Useful for periodic monitoring or before/after comparisons. Failures of individual sub-checks surface in `caveats`.",
+  deviceHealthSchema.shape,
+  wrapToolHandler(deviceHealth),
 );
 
 currentCategory = "meta";
