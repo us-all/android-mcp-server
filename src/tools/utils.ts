@@ -1,22 +1,5 @@
+import { createWrapToolHandler } from "@us-all/mcp-toolkit";
 import { config } from "../config.js";
-import { applyExtractFields } from "./extract-fields.js";
-
-const SENSITIVE_PATTERNS = [
-  /api[_-]?key/gi,
-  /secret/gi,
-  /password/gi,
-  /token/gi,
-  /bearer\s+\S+/gi,
-  /authorization/gi,
-];
-
-function sanitize(text: string): string {
-  let result = text;
-  for (const pattern of SENSITIVE_PATTERNS) {
-    result = result.replace(pattern, "[REDACTED]");
-  }
-  return result;
-}
 
 export class WriteBlockedError extends Error {
   constructor() {
@@ -176,53 +159,69 @@ export function validateDevicePath(path: string): void {
   }
 }
 
-export function wrapToolHandler<T>(fn: (params: T) => Promise<unknown>) {
-  return async (params: T) => {
-    try {
-      const result = await fn(params);
-      const expr = (params as Record<string, unknown> | undefined)?.extractFields;
-      const projected = typeof expr === "string" ? applyExtractFields(result, expr) : result;
-      return {
-        content: [
-          { type: "text" as const, text: JSON.stringify(projected, null, 2) },
-        ],
-      };
-    } catch (error) {
-      if (error instanceof WriteBlockedError || error instanceof ShellBlockedError) {
-        return {
-          content: [{ type: "text" as const, text: error.message }],
-          isError: true,
-        };
-      }
+// Local sanitize helper retained for the image handler's error path
+// (image responses are Android-specific and not part of the shared
+// text-wrapper surface in @us-all/mcp-toolkit).
+const SENSITIVE_PATTERNS = [
+  /api[_-]?key/gi,
+  /secret/gi,
+  /password/gi,
+  /token/gi,
+  /bearer\s+\S+/gi,
+  /authorization/gi,
+];
 
-      const structured: Record<string, unknown> = {
-        message: "Unknown error",
-      };
-
-      if (error instanceof Error) {
-        structured.message = sanitize(error.message);
-
-        if ("code" in error && typeof (error as Record<string, unknown>).code === "number") {
-          structured.exitCode = (error as Record<string, unknown>).code;
-        }
-        if ("stderr" in error && typeof (error as Record<string, unknown>).stderr === "string") {
-          structured.stderr = sanitize(
-            (error as Record<string, unknown>).stderr as string,
-          );
-        }
-      } else {
-        structured.message = sanitize(String(error));
-      }
-
-      return {
-        content: [
-          { type: "text" as const, text: JSON.stringify(structured, null, 2) },
-        ],
-        isError: true,
-      };
-    }
-  };
+function sanitize(text: string): string {
+  let result = text;
+  for (const pattern of SENSITIVE_PATTERNS) {
+    result = result.replace(pattern, "[REDACTED]");
+  }
+  return result;
 }
+
+/**
+ * Text-response tool wrapper — delegates to the shared toolkit factory.
+ * Handles WriteBlockedError / ShellBlockedError (passthrough) and ADB-style
+ * errors with `code` (numeric exit code) / `stderr` (string).
+ */
+export const wrapToolHandler = createWrapToolHandler({
+  // Defaults already cover api_key, authorization, bearer, password, secret,
+  // token. No Android-specific patterns to add.
+  errorExtractors: [
+    {
+      match: (error) => error instanceof WriteBlockedError,
+      extract: (error) => ({
+        kind: "passthrough",
+        text: (error as WriteBlockedError).message,
+      }),
+    },
+    {
+      match: (error) => error instanceof ShellBlockedError,
+      extract: (error) => ({
+        kind: "passthrough",
+        text: (error as ShellBlockedError).message,
+      }),
+    },
+    {
+      // ADB-style error shape: numeric `code` (exit code) and/or `stderr`.
+      match: (error) => {
+        if (!(error instanceof Error)) return false;
+        const e = error as unknown as Record<string, unknown>;
+        return typeof e.code === "number" || typeof e.stderr === "string";
+      },
+      extract: (error) => {
+        const err = error as Error;
+        const e = error as unknown as Record<string, unknown>;
+        const data: Record<string, unknown> & { message: string } = {
+          message: err.message,
+        };
+        if (typeof e.code === "number") data.code = e.code;
+        if (typeof e.stderr === "string") data.stderr = e.stderr;
+        return { kind: "structured", data };
+      },
+    },
+  ],
+});
 
 export function wrapImageToolHandler<T>(
   fn: (params: T) => Promise<{ base64: string; mimeType: string; metadata?: unknown }>,
