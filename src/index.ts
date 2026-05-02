@@ -187,6 +187,7 @@ import {
 import { registry, searchToolsSchema, searchTools, type Category } from "./tool-registry.js";
 import { analyzeAppSchema, analyzeApp } from "./tools/aggregations.js";
 import { registerResources } from "./resources.js";
+import { registerPrompts } from "./prompts.js";
 
 await validateConfig();
 
@@ -786,6 +787,9 @@ tool(
 
 // --- MCP Resources (android:// URI scheme) ---
 registerResources(server);
+
+// --- MCP Prompts (workflow templates) ---
+registerPrompts(server);
 
 // --- Start server ---
 
