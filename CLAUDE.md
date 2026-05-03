@@ -62,7 +62,8 @@ pnpm token-stats        # tools/list 토큰 측정
 |-----|------|
 | `android://devices` | 연결된 모든 디바이스 |
 | `android://device/{serial}` | 디바이스 상세 (model/brand/version/display) |
-| `android://app/{packageName}` | 앱 패키지 메타데이터 |
+| `android://app/{packageName}/activities` | 앱이 노출하는 액티비티 목록 (exported/launchable 플래그) |
+| `android://device/{serial}/processes` | 디바이스 실행 중 프로세스 목록 |
 
 ## 설계 원칙
 
@@ -74,6 +75,10 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.10.0** (2026-05-02): `device-health` 어그리게이션 도구 — battery + memory + cpu + network 1 call로 통합 (~7KB 응답, 4 sub-systems).
+- **v1.9.0** (2026-05-02): Wave 3 Resources — `android://device/{serial}/processes`, `android://app/{packageName}/activities` 추가.
+- **v1.8.0** (2026-05-02): MCP Prompts 5개 — `crash-investigation`, `memory-leak-detection`, `ui-element-locator`, `app-startup-profile`, `permission-audit`.
+- **v1.7.3** (2026-05-02): Wave 1 — 56개 스키마 `.describe()` trim (54x serial 파라미터 통합). C(default extractFields)는 ADB flat-array 응답에 안 맞아 skip.
 - **v1.7.2** (2026-05-02): 트랜시티브 의존성 보안 패치 — `fast-xml-parser ^5.7.0`(GHSA-gh4j-gqv2-49f6), `pnpm.overrides`로 `vite ^8.0.5`(GHSA-v2wj-q39q-566r·GHSA-p9ff-h696-f583 high) + `@hono/node-server >=1.19.13`(GHSA-92pp-h63x-v22m). 코드 변경 0줄.
 - **v1.7.1** (2026-05-02): `@us-all/mcp-toolkit ^0.2.0` 채택 — 로컬 `sanitize` / `wrapToolHandler` (text) 본문 제거, `createWrapToolHandler` factory로 위임. `errorExtractors`(WriteBlockedError·ShellBlockedError → passthrough, ADB error `{code,stderr}` → structured)만 명시. `wrapImageToolHandler`는 Android 전용이라 로컬 유지.
 - **v1.7.0** (2026-05-01): `@us-all/mcp-toolkit ^0.1.0` 마이그레이션 — tool-registry/extract-fields toolkit 위임. ~177 lines 절감.
