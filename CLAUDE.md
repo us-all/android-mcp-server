@@ -75,6 +75,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.10.1** (2026-05-03): `@us-all/mcp-toolkit ^1.0.0` 핀 업데이트. toolkit API freeze (semver 1.x 보장 시작) — 코드 변경 0줄, 72/72 테스트 통과.
 - **v1.10.0** (2026-05-02): `device-health` 어그리게이션 도구 — battery + memory + cpu + network 1 call로 통합 (~7KB 응답, 4 sub-systems).
 - **v1.9.0** (2026-05-02): Wave 3 Resources — `android://device/{serial}/processes`, `android://app/{packageName}/activities` 추가.
 - **v1.8.0** (2026-05-02): MCP Prompts 5개 — `crash-investigation`, `memory-leak-detection`, `ui-element-locator`, `app-startup-profile`, `permission-audit`.
