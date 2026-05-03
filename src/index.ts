@@ -1,9 +1,15 @@
 #!/usr/bin/env node
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler, wrapImageToolHandler } from "./tools/utils.js";
+
+const pkgPath = join(dirname(fileURLToPath(import.meta.url)), "..", "package.json");
+const { version: pkgVersion } = JSON.parse(readFileSync(pkgPath, "utf-8")) as { version: string };
 
 // Device tools
 import {
@@ -198,7 +204,7 @@ await validateConfig();
 
 const server = new McpServer({
   name: "android-mcp-server",
-  version: "1.3.0",
+  version: pkgVersion,
 });
 
 // --- Tool registration with category filtering (ANDROID_TOOLS / ANDROID_DISABLE) ---
