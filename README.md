@@ -1,101 +1,63 @@
 # Android MCP Server
 
+> **The Android diagnostic & forensic MCP — when an app crashes, leaks memory, drains battery, or behaves unexpectedly, this is what you point at the device.**
+>
+> 75 tools across logcat / dumpsys / package internals / system properties / processes. 5 MCP Prompts (crash-investigation, memory-leak-detection, permission-audit, app-startup-profile, ui-element-locator) and a `device-health` aggregation. Pure ADB, no Appium / uiautomator2 dependency. 2-tier security (write + shell gates).
+
+[![npm](https://img.shields.io/npm/v/@us-all/android-mcp)](https://www.npmjs.com/package/@us-all/android-mcp)
+[![downloads](https://img.shields.io/npm/dm/@us-all/android-mcp)](https://www.npmjs.com/package/@us-all/android-mcp)
+[![tools](https://img.shields.io/badge/tools-75-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 
-Android MCP server — ADB-based device management, UI automation, logcat debugging, emulator control, and more via the [Model Context Protocol](https://modelcontextprotocol.io/).
+## What it does that others don't
 
-> Authored to the [@us-all MCP Standard](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md) — token-efficient by design.
+- **Diagnostic depth** — logcat search/crash extraction, `dumpsys` (mem/gfx/cpu), getprop, processes, package internals, app intents, port forwards. Cross-platform competitors hide this surface.
+- **MCP Prompts** (5) — `crash-investigation`, `memory-leak-detection`, `ui-element-locator`, `app-startup-profile`, `permission-audit`. Workflow templates the model invokes directly.
+- **Aggregation tools** — `device-health` (battery + memory + cpu + network in one call), `analyze-app` (package info + memory + activities).
+- **2-tier security** — `ANDROID_MCP_ALLOW_WRITE` (gates installs/taps/pushes) and `ANDROID_MCP_ALLOW_SHELL` (gates arbitrary `adb shell`) are separate flags. Distinct trust levels.
+- **Pure ADB** — no Appium, no uiautomator2, no Python bridge. Just the official Android Debug Bridge wrapped over `child_process`.
+- **Token-efficient by design** — 56 schema-trim sweep, `ANDROID_TOOLS`/`ANDROID_DISABLE` 9 categories, `search-tools` meta.
 
-**Android-only specialist.** Pure ADB, 72 tools, no Appium/uiautomator2 dependency. If you need iOS + Android cross-platform automation, use [mobile-next/mobile-mcp](https://github.com/mobile-next/mobile-mcp). Use this server when you want deep Android coverage (logcat, emulator AVDs, broadcast intents, screen recording, 2-tier security gating) without the extra abstraction layer.
+## Try this — 5 prompts
 
-## Why This Server?
+Connect the server to Claude Desktop or Claude Code, then paste any of these:
 
-| Feature | Other Android MCPs | This Server |
-|---------|-------------------|-------------|
-| UI Automation (tap, swipe, screenshot) | ✓ | ✓ |
-| UI Hierarchy (accessibility tree) | ✓ | ✓ (compact mode for token efficiency) |
-| Logcat filtering & crash log extraction | — | ✓ |
-| Emulator lifecycle (AVD start/stop/snapshot) | — | ✓ |
-| File management (push/pull) | — | ✓ |
-| System info (battery, network, settings) | — | ✓ |
-| App data clear & permission management | — | ✓ |
-| Screen recording (start/pull) | — | ✓ |
-| Port forwarding (forward/reverse) | — | ✓ |
-| Display size/density override | — | ✓ |
-| Broadcast intents & deep link testing | — | ✓ |
-| 2-tier security (write + shell gating) | — | ✓ |
-| Pure ADB (no Appium/uiautomator2 dependency) | — | ✓ |
-| TypeScript + official MCP SDK | — | ✓ |
+1. **Crash investigation** — *"My app `com.us-all.api` keeps crashing on this Pixel 6 emulator. Pull the last crash log, the offending stack frames, and any recent permission changes."*
+2. **Memory leak detection** — *"Trace memory growth for `com.us-all.api` over the last 5 minutes. Show heap deltas, GC pressure, and the largest allocators."*
+3. **Battery drain attribution** — *"What's draining battery on this device? Top 5 consumers, duration of each, and current battery health."*
+4. **Permission audit** — *"Audit installed 3rd-party apps for dangerous permissions (location/camera/contacts/microphone). Flag any app that hasn't been used in the last 30 days but holds these."*
+5. **App startup profile** — *"Profile the cold-start of `com.us-all.api` — measure activity launch time, identify the slowest fragment init, and suggest where to add tracing."*
 
-## Quick Start
+## When to use this vs mobile-next/mobile-mcp
 
-### 1. npx (recommended)
+[`mobile-next/mobile-mcp`](https://github.com/mobile-next/mobile-mcp) (4.7K★) is the cross-platform action-oriented MCP. Different problem space:
 
-```bash
-npx @us-all/android-mcp
-```
+| | mobile-mcp | `@us-all/android-mcp` (this) |
+|--|---|---|
+| Platform | iOS + Android (cross-platform) | Android only (specialist) |
+| Posture | Action-oriented ("drive the app via NL") | Diagnostic ("tell me why it broke") |
+| UI surface | Accessibility-tree-first, action loops | UI hierarchy + screenshots + diagnostic dumps |
+| Diagnostic depth | minimal | logcat / dumpsys / getprop / processes / crashes |
+| Aggregations | — | `device-health`, `analyze-app` |
+| MCP Prompts | — | 5 (diagnostic-themed) |
+| Security gates | basic | 2-tier (write + shell separate) |
+| Distribution | broad (12+ IDE buttons) | npm + Docker |
 
-### 2. Docker
+**Use both — they're complementary.** mobile-mcp drives the device through your QA flows; this MCP tells you why it broke when something does. Especially:
+- mobile-mcp finds the bug via UI exploration → this MCP captures the crash log + heap dump.
+- mobile-mcp can't tell you why startup is slow → this MCP gives you `dumpsys gfxinfo` + activity launch timing.
+- mobile-mcp can't reproduce a permission denial → this MCP shows the exact `dumpsys package` permission state and recent grants.
 
-```bash
-docker run --rm \
-  --device /dev/bus/usb \
-  -e ANDROID_MCP_ALLOW_WRITE=true \
-  ghcr.io/us-all/android-mcp-server:latest
-```
-
-### 3. Build from source
-
-```bash
-git clone https://github.com/us-all/android-mcp-server.git
-cd android-mcp-server
-pnpm install
-pnpm run build
-pnpm start
-```
-
-## Configuration
-
-### Environment Variables
-
-| Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `ANDROID_HOME` | No | auto-detect | Android SDK path |
-| `ADB_PATH` | No | `adb` (PATH) | Path to ADB binary |
-| `ANDROID_SERIAL` | No | auto (single device) | Target device serial number |
-| `ANDROID_MCP_ALLOW_WRITE` | No | `false` | Enable write operations (install, tap, push, etc.) |
-| `ANDROID_MCP_ALLOW_SHELL` | No | `false` | Enable arbitrary shell command execution |
-| `ANDROID_TOOLS` | No | — | Allowlist of tool categories (e.g. `device,ui,apps`). Categories: `device`, `apps`, `ui`, `logcat`, `emulator`, `files`, `system`, `debug`, `shell`. |
-| `ANDROID_DISABLE` | No | — | Denylist of categories. Ignored when `ANDROID_TOOLS` is set. |
-
-### Token Efficiency
-
-With 73 tools, naive setup loads ~9.2K tokens of tool schema. Category toggles drop further.
-
-**Measured impact** (from `tools/list` JSON length, ~4 chars/token):
-
-| Scenario | Tools loaded | Schema tokens | vs default |
-|----------|--------------|---------------|-----------|
-| default (all categories) | 73 | **9,200** | — |
-| typical (`ANDROID_TOOLS=device,ui,apps,logcat`) | 37 | 5,000 | −46% |
-| narrow (`ANDROID_TOOLS=device,ui`) | 19 | **2,500** | **−73%** |
-
-Plus `search-tools` meta-tool (always enabled) for tool discovery.
-
-### Read-Only Mode (default)
-
-By default, only read operations are permitted. Write operations (`tap`, `install-app`, `push-file`, etc.) return an error unless `ANDROID_MCP_ALLOW_WRITE=true` is set. Shell command execution requires a separate `ANDROID_MCP_ALLOW_SHELL=true` flag for additional security.
+## Install
 
 ### Claude Desktop
-
-Add to your Claude Desktop configuration:
 
 ```json
 {
   "mcpServers": {
     "android": {
       "command": "npx",
-      "args": ["@us-all/android-mcp"],
+      "args": ["-y", "@us-all/android-mcp"],
       "env": {
         "ANDROID_MCP_ALLOW_WRITE": "true"
       }
@@ -106,240 +68,172 @@ Add to your Claude Desktop configuration:
 
 ### Claude Code
 
-Add to your project's `.mcp.json`:
-
-```json
-{
-  "mcpServers": {
-    "android": {
-      "type": "stdio",
-      "command": "npx",
-      "args": ["@us-all/android-mcp"],
-      "env": {
-        "ANDROID_MCP_ALLOW_WRITE": "true",
-        "ANDROID_MCP_ALLOW_SHELL": "true"
-      }
-    }
-  }
-}
+```bash
+claude mcp add android -s user \
+  -e ANDROID_MCP_ALLOW_WRITE=true \
+  -e ANDROID_MCP_ALLOW_SHELL=true \
+  -- npx -y @us-all/android-mcp
 ```
 
-Or from a local build:
+### Docker
 
-```json
-{
-  "mcpServers": {
-    "android": {
-      "type": "stdio",
-      "command": "node",
-      "args": ["dist/index.js"],
-      "cwd": "/path/to/android-mcp-server",
-      "env": {
-        "ANDROID_MCP_ALLOW_WRITE": "true",
-        "ANDROID_MCP_ALLOW_SHELL": "true"
-      }
-    }
-  }
-}
+```bash
+docker run --rm \
+  --device /dev/bus/usb \
+  -e ANDROID_MCP_ALLOW_WRITE=true \
+  ghcr.io/us-all/android-mcp-server:latest
 ```
 
-## Tools (72)
+### Build from source
+
+```bash
+git clone https://github.com/us-all/android-mcp-server.git
+cd android-mcp-server && pnpm install && pnpm build
+node dist/index.js
+```
+
+### Prerequisites
+
+- ADB installed and on `PATH` (or set `ADB_PATH`)
+- Android device or emulator with USB debugging enabled
+- For multi-device setups: `ANDROID_SERIAL=<serial>` to target a specific one
+
+## Configuration
+
+| Variable | Required | Default | Description |
+|---|---|---|---|
+| `ANDROID_HOME` | ❌ | auto-detect | Android SDK path |
+| `ADB_PATH` | ❌ | `adb` (PATH) | Path to ADB binary |
+| `ANDROID_SERIAL` | ❌ | auto (single device) | Target device serial |
+| `ANDROID_MCP_ALLOW_WRITE` | ❌ | `false` | Enable write operations (install, tap, push) |
+| `ANDROID_MCP_ALLOW_SHELL` | ❌ | `false` | Enable arbitrary `adb shell` execution |
+| `ANDROID_TOOLS` | ❌ | — | Comma-sep allowlist of categories. Biggest token saver. |
+| `ANDROID_DISABLE` | ❌ | — | Comma-sep denylist. Ignored when `ANDROID_TOOLS` is set. |
+
+**Categories** (9): `device`, `apps`, `ui`, `logcat`, `emulator`, `files`, `system`, `debug`, `shell` (always-gated by `ANDROID_MCP_ALLOW_SHELL`), plus always-on `meta`.
+
+### Token efficiency
+
+| Scenario | Tools | Schema tokens | vs default |
+|----------|------:|--------------:|-----------:|
+| default (all categories) | 75 | 9,200 | — |
+| typical (`ANDROID_TOOLS=device,ui,apps,logcat`) | 37 | 5,000 | −46% |
+| narrow (`ANDROID_TOOLS=device,ui`) | 19 | **2,500** | **−73%** |
+
+Plus `search-tools` meta-tool (always enabled) for runtime tool discovery.
+
+### Read-only mode (default)
+
+By default, only read operations are permitted. Write operations (`tap`, `install-app`, `push-file`, etc.) return an error unless `ANDROID_MCP_ALLOW_WRITE=true`. Shell command execution requires a **separate** `ANDROID_MCP_ALLOW_SHELL=true` for additional security — even with write enabled, raw shell stays blocked unless this is explicitly set.
+
+## MCP Prompts (5)
+
+Workflow templates available via MCP `prompts/list`:
+
+- `crash-investigation` — pull crash logs + stack frames + recent permission changes for a target package.
+- `memory-leak-detection` — track heap delta over a window; cluster by allocator.
+- `ui-element-locator` — find a UI element by visual + accessibility hints; return tap coordinates.
+- `app-startup-profile` — cold-start profile: activity launch + fragment init + first frame.
+- `permission-audit` — flag dangerous permissions held by under-used 3rd-party apps.
+
+## MCP Resources
+
+URI-based read-only entities:
+
+- `android://devices` — connected devices
+- `android://device/{serial}` — device details (model/brand/version/display)
+- `android://app/{packageName}/activities` — activities exposed by a package (exported/launchable flags)
+- `android://device/{serial}/processes` — running processes
+
+## Tools (75)
+
+9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
+
+| Category | Tools |
+|----------|------:|
+| System (battery / network / settings / display / orientation / port-fwd / wifi / mobile-data) | 19 |
+| Apps (install / launch / permissions / intents / data clear) | 14 |
+| UI (tap / swipe / screenshot / hierarchy / annotated tap-by-index / screen recording) | 13 |
+| Emulator (AVD start/stop, snapshot mgmt) | 7 |
+| Device (list / info / properties / wireless connect) | 5 |
+| Debug (bugreport / mem / gfx / cpu / doctor) | 5 |
+| Logcat (capture / filter / clear / crash extract) | 4 |
+| Files (list / pull / push / delete) | 4 |
+| Shell (gated `execute-shell`) | 1 |
+| Aggregations (`device-health`, `analyze-app`) | 2 |
+| Meta (`search-tools`) | 1 |
+
+<details>
+<summary>Full tool list</summary>
 
 ### Device (5)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `list-devices` | List connected devices and emulators with status | R |
-| `get-device-info` | Device model, brand, Android version, SDK, display info | R |
-| `get-device-properties` | System properties via getprop (filterable by prefix) | R |
-| `connect-device` | Connect to device over TCP/IP (wireless ADB) | W |
-| `disconnect-device` | Disconnect TCP/IP device | W |
+`list-devices`, `get-device-info`, `get-device-properties`, `connect-device`, `disconnect-device`
 
 ### Apps (14)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `list-packages` | List installed packages (filter by name, type: all/system/3rd-party) | R |
-| `get-package-info` | Package version, SDK targets, install time, permissions | R |
-| `install-app` | Install APK file on device | W |
-| `uninstall-app` | Uninstall app (optionally keep data) | W |
-| `launch-app` | Launch app by package name (or specific activity) | W |
-| `stop-app` | Force stop an app | W |
-| `clear-app-data` | Clear all app data and cache (test isolation) | W |
-| `grant-permission` | Grant a runtime permission (e.g. CAMERA) | W |
-| `revoke-permission` | Revoke a runtime permission | W |
-| `open-url` | Open URL on device browser (http/https/deep links) | W |
-| `send-broadcast` | Send broadcast intent with optional extras | W |
-| `get-current-activity` | Get currently visible activity and window focus | R |
-| `is-app-installed` | Check if an app is installed (boolean) | R |
-| `get-app-intents` | Discover intent actions and deep links for an app | R |
+`list-packages`, `get-package-info`, `install-app`, `uninstall-app`, `launch-app`, `stop-app`, `clear-app-data`, `grant-permission`, `revoke-permission`, `open-url`, `send-broadcast`, `get-current-activity`, `is-app-installed`, `get-app-intents`
 
 ### UI Automation (13)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `take-screenshot` | Capture screen as PNG image (returned as base64) | R |
-| `dump-ui-hierarchy` | Dump accessibility tree — compact mode returns interactive elements only with center coordinates for token efficiency | R |
-| `tap` | Tap at (x, y) coordinates | W |
-| `long-press` | Long press at (x, y) with configurable duration | W |
-| `swipe` | Swipe gesture from (x1,y1) to (x2,y2) | W |
-| `input-text` | Type text (special characters escaped) | W |
-| `press-key` | Key event: BACK, HOME, ENTER, VOLUME_UP, etc. | W |
-| `drag-and-drop` | Drag from one point to another (reorder items, etc.) | W |
-| `start-screen-recording` | Start recording device screen to video file (max 180s) | W |
-| `pull-screen-recording` | Pull recorded video from device to local filesystem | R |
-| `double-tap` | Double tap at screen coordinates | W |
-| `take-annotated-screenshot` | Screenshot + numbered interactive element map (solves coordinate accuracy) | R |
-| `tap-element` | Tap element by index number from hierarchy/annotated screenshot | W |
+`take-screenshot`, `dump-ui-hierarchy`, `tap`, `long-press`, `swipe`, `input-text`, `press-key`, `drag-and-drop`, `start-screen-recording`, `pull-screen-recording`, `double-tap`, `take-annotated-screenshot`, `tap-element`
 
 ### Logcat (4)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `get-logcat` | Get recent logs with tag and priority filter (V/D/I/W/E/F) | R |
-| `clear-logcat` | Clear logcat buffer | W |
-| `search-logcat` | Search logs by text pattern (case-insensitive supported) | R |
-| `get-crash-logs` | Extract crash/fatal logs, optionally filtered by package | R |
+`get-logcat`, `clear-logcat`, `search-logcat`, `get-crash-logs`
 
 ### Emulator (7)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `list-avds` | List available Android Virtual Devices | R |
-| `start-emulator` | Start AVD (supports headless mode, data wipe) | W |
-| `stop-emulator` | Stop a running emulator | W |
-| `list-snapshots` | List emulator snapshots | R |
-| `load-snapshot` | Load an emulator snapshot | W |
-| `save-snapshot` | Save current emulator state as snapshot | W |
-| `delete-snapshot` | Delete an emulator snapshot | W |
+`list-avds`, `start-emulator`, `stop-emulator`, `list-snapshots`, `load-snapshot`, `save-snapshot`, `delete-snapshot`
 
 ### Files (4)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `list-files` | List files on device (supports recursive) | R |
-| `pull-file` | Download file from device to local filesystem | R |
-| `push-file` | Upload local file to device | W |
-| `delete-file` | Delete file or directory on device | W |
+`list-files`, `pull-file`, `push-file`, `delete-file`
 
 ### System (19)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `get-battery-info` | Battery level, charging state, temperature, health | R |
-| `get-network-info` | WiFi status, IP address, connectivity details | R |
-| `change-setting` | Modify system/secure/global settings | W |
-| `get-setting` | Read a system setting value (system/secure/global) | R |
-| `set-display-size` | Override display resolution (responsive testing) | W |
-| `set-display-density` | Override display density in DPI | W |
-| `keep-screen-on` | Prevent screen timeout while charging | W |
-| `port-forward` | Forward host port to device port (adb forward) | W |
-| `reverse-forward` | Reverse forward device port to host (adb reverse) | W |
-| `list-forwards` | List all active port forwards and reverses | R |
-| `remove-forward` | Remove specific or all port forwards | W |
-| `toggle-wifi` | Enable or disable WiFi | W |
-| `toggle-mobile-data` | Enable or disable mobile data | W |
-| `open-notification` | Open notification/status bar panel | W |
-| `lock-device` | Lock the device screen | W |
-| `unlock-device` | Wake up and unlock (optional PIN) | W |
-| `get-orientation` | Get screen orientation and auto-rotate setting | R |
-| `set-orientation` | Set orientation: portrait, landscape, or auto | W |
-| `list-settings` | List all settings in a namespace | R |
+`get-battery-info`, `get-network-info`, `change-setting`, `get-setting`, `set-display-size`, `set-display-density`, `keep-screen-on`, `port-forward`, `reverse-forward`, `list-forwards`, `remove-forward`, `toggle-wifi`, `toggle-mobile-data`, `open-notification`, `lock-device`, `unlock-device`, `get-orientation`, `set-orientation`, `list-settings`
 
 ### Debug (5)
-
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `bugreport` | Generate full Android bugreport zip (up to 2 min) | R |
-| `get-mem-info` | Memory usage: per-app PSS/heap or system summary | R |
-| `get-gfx-info` | GPU rendering: frame count, jank %, percentile latencies | R |
-| `get-cpu-info` | CPU usage with top consuming processes | R |
-| `doctor` | Environment health check: ADB, devices, SDK, permissions | R |
+`bugreport`, `get-mem-info`, `get-gfx-info`, `get-cpu-info`, `doctor`
 
 ### Shell (1)
+`execute-shell` — gated by `ANDROID_MCP_ALLOW_SHELL`
 
-| Tool | Description | R/W |
-|------|-------------|-----|
-| `execute-shell` | Execute arbitrary ADB shell command (requires `ANDROID_MCP_ALLOW_SHELL`) | W |
+### Aggregations
+`device-health` — battery + memory + cpu + network in one call (~7KB response, 4 sub-systems with caveats).
+`analyze-app` — package info + memory + activities aggregation.
+
+### Meta
+`search-tools` — query other tools by keyword; always enabled.
+
+</details>
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────┐
-│                 Claude / AI Client                   │
-└─────────────────────┬────────────────────────────────┘
-                      │ MCP Protocol (stdio)
-                      ▼
-┌──────────────────────────────────────────────────────┐
-│           android-mcp-server (index.ts)              │
-│                                                      │
-│  ┌─────────┐  ┌──────────────────────────────────┐   │
-│  │config.ts│  │          tools/                   │   │
-│  │ ADB path│  │  device.ts  ── 5 tools           │   │
-│  │ serial  │  │  apps.ts    ── 14 tools          │   │
-│  │ perms   │  │  ui.ts      ── 11 tools          │   │
-│  └─────────┘  │  logcat.ts  ── 4 tools           │   │
-│               │  emulator.ts── 7 tools           │   │
-│  ┌─────────┐  │  files.ts   ── 4 tools           │   │
-│  │ adb.ts  │  │  system.ts  ── 19 tools          │   │
-│  │ wrapper │  │  debug.ts   ── 4 tools           │   │
-│  │         │  │  shell.ts   ── 1 tool            │   │
-│  └─────────┘  │  utils.ts   ── error handling    │   │
-│               └──────────────────────────────────┘   │
-└─────────────────────┬────────────────────────────────┘
-                      │ child_process (execFile)
-                      ▼
-┌──────────────────────────────────────────────────────┐
-│              ADB (Android Debug Bridge)              │
-│                                                      │
-│         USB / TCP-IP / Emulator connection            │
-└─────────────────────┬────────────────────────────────┘
-                      │
-                      ▼
-               Android Device
+Claude → MCP stdio → src/index.ts
+                      ├── adb.ts (execFile wrapper)
+                      ├── tools/utils.ts (wrapToolHandler, shellEscape, validation)
+                      └── tools/{device,apps,ui,logcat,emulator,files,system,debug,shell,aggregations}.ts
+                                  ↓
+                          ADB CLI (USB / TCP-IP / Emulator)
+                                  ↓
+                          Android Device
 ```
 
-## Tech Stack
-
-- **Runtime:** Node.js 20+
-- **Language:** TypeScript 5.x (strict mode, ESM)
-- **MCP SDK:** @modelcontextprotocol/sdk 1.27+
-- **Validation:** zod 4.x
-- **XML Parser:** fast-xml-parser (UI hierarchy parsing)
-- **Android:** ADB via child_process (no Appium, no uiautomator2)
-- **Testing:** vitest (fork pool isolation)
-- **Package Manager:** pnpm
+Built on [`@us-all/mcp-toolkit`](https://github.com/us-all/mcp-toolkit):
+- `extractFields` — token-efficient response projections (skipped for ADB flat-array endpoints)
+- `aggregate(fetchers, caveats)` — fan-out helper for `device-health` / `analyze-app`
+- `createWrapToolHandler` — `WriteBlockedError`/`ShellBlockedError` passthrough + structured ADB errors (`{code, stderr}`)
+- `wrapImageToolHandler` (Android-only) — base64 PNG sanitization
+- `search-tools` meta-tool
 
 ## Security
 
-- **Read-only by default** — All write operations blocked unless `ANDROID_MCP_ALLOW_WRITE=true`
-- **Shell gating** — Arbitrary shell commands require separate `ANDROID_MCP_ALLOW_SHELL=true`
-- **Error sanitization** — API keys, tokens, passwords redacted from all error outputs
-- **Input validation** — All parameters validated via zod schemas before execution
-- **No ambient authority** — No global state mutation; explicit device targeting via serial
+- **Read-only by default.** Writes blocked without `ANDROID_MCP_ALLOW_WRITE=true`.
+- **Shell gating separate.** `execute-shell` blocked without `ANDROID_MCP_ALLOW_SHELL=true` even with write enabled — distinct trust levels.
+- **Shell injection safe.** `shellEscape` for single-quote-based escape; input validation via zod regex whitelists for setting keys, package names, permissions, components, broadcast actions/extras.
+- **Path-traversal blocked.** Device paths require absolute + no `..` + no shell metachars.
+- **Error sanitization.** API keys, tokens, passwords redacted from all error outputs.
 
-## Development
+## Tech stack
 
-```bash
-pnpm install          # Install dependencies
-pnpm run dev          # Watch mode (tsc --watch)
-pnpm run build        # Compile TypeScript → dist/
-pnpm test             # Run unit tests
-pnpm start            # Run MCP server
-```
-
-### Adding a new tool
-
-1. Define zod schema + async handler in `src/tools/<category>.ts`
-2. Import and register with `server.tool()` in `src/index.ts`
-3. Use `wrapToolHandler()` for consistent response formatting
-4. Use `assertWriteAllowed()` for write operations
-5. Run `pnpm run build && pnpm test`
-
-## Contributing
-
-See [CONTRIBUTING.md](./CONTRIBUTING.md) for development guidelines.
+Node.js 20+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` 1.27+ • zod v4 • fast-xml-parser • vitest (fork pool isolation).
 
 ## License
 
-MIT
+[MIT](./LICENSE)
