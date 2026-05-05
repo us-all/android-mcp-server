@@ -75,6 +75,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.12.0** (2026-05-05): Apps SDK UI 카드 — `device-health` 도구 결과를 `_meta["openai/outputTemplate"]` 통해 ChatGPT/Apps SDK 클라이언트에서 카드로 렌더 (배터리 %, RAM 사용량, Wi-Fi 상태 + battery/memory/cpu/network 4개 sub-system grid). 새 리소스 `ui://widget/device-health.html` (`text/html+skybridge`). Claude 클라이언트는 `_meta` 무시 — non-breaking. 빌드 시 `src/ui/*.html`을 `dist/ui/`로 자동 복사.
 - **v1.11.0** (2026-05-05): `startMcpServer` 채택 — toolkit v1.2.0의 런타임 헬퍼로 stdio 부트스트랩을 1줄로 교체. `MCP_TRANSPORT=http`로 Streamable HTTP transport 옵트인 가능 (기본 stdio). Bearer 인증, `/health` 엔드포인트. 기존 stdio 사용자 영향 0.
 - **v1.10.4** (2026-05-05): `@us-all/mcp-toolkit ^1.2.0` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.10.3** (2026-05-03): `serverInfo.version`이 `"1.3.0"`에 박혀있던 것을 `package.json`에서 런타임 로드. initialize handshake에서 보고하는 server version이 실제 패키지 버전과 일치.

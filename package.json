@@ -1,6 +1,6 @@
 {
   "name": "@us-all/android-mcp",
-  "version": "1.11.0",
+  "version": "1.12.0",
   "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
   "type": "module",
   "main": "dist/index.js",
@@ -24,7 +24,7 @@
     }
   },
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && node -e \"require('fs').cpSync('src/ui','dist/ui',{recursive:true})\"",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
     "test": "vitest run",

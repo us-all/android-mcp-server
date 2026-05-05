@@ -789,11 +789,30 @@ tool(
 
 currentCategory = "device";
 
+// Card-aware wrapper: see datadog `slo-compliance-snapshot` for the same pattern.
+const DEVICE_HEALTH_CARD_URI = "ui://widget/device-health.html";
+const wrappedDeviceHealth = wrapToolHandler(deviceHealth);
+async function deviceHealthWithCard(args: Parameters<typeof wrappedDeviceHealth>[0]) {
+  const result = await wrappedDeviceHealth(args);
+  if (result.isError) return result;
+  try {
+    const structured = JSON.parse(result.content[0].text);
+    return {
+      ...result,
+      structuredContent: structured,
+      _meta: {
+        "openai/outputTemplate": DEVICE_HEALTH_CARD_URI,
+        "ui.resourceUri": DEVICE_HEALTH_CARD_URI,
+      },
+    };
+  } catch { return result; }
+}
+
 tool(
   "device-health",
-  "Aggregated device health snapshot: battery + system memory + cpu + network in one call. Useful for periodic monitoring or before/after comparisons. Failures of individual sub-checks surface in `caveats`.",
+  "Aggregated device health snapshot: battery + system memory + cpu + network in one call. Useful for periodic monitoring or before/after comparisons. Failures of individual sub-checks surface in `caveats`. Renders an Apps SDK card on ChatGPT clients (Claude clients receive the same JSON text).",
   deviceHealthSchema.shape,
-  wrapToolHandler(deviceHealth),
+  deviceHealthWithCard,
 );
 
 currentCategory = "meta";

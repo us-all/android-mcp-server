@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Device Health</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #fff; --fg: #1f2328; --muted: #57606a; --border: #d0d7de;
+    --ok: #1a7f37; --warn: #bf8700; --err: #cf222e;
+    --pill-ok: #dafbe1; --pill-warn: #fff8c5; --pill-err: #ffebe9; --pill-unk: #eaeef2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg: #0d1117; --fg: #c9d1d9; --muted: #8b949e; --border: #30363d;
+      --ok: #3fb950; --warn: #d29922; --err: #f85149;
+      --pill-ok: #033a16; --pill-warn: #3a2700; --pill-err: #3a0d12; --pill-unk: #21262d; }
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body { font: 13px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    color: var(--fg); background: var(--bg); padding: 16px; }
+  h1 { font-size: 15px; margin: 0 0 4px; }
+  .meta { color: var(--muted); font-size: 12px; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+  section { border: 1px solid var(--border); border-radius: 6px; padding: 10px 12px; }
+  section h2 { font-size: 11px; margin: 0 0 6px; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); }
+  dl { margin: 0; display: grid; grid-template-columns: 1fr auto; gap: 2px 12px; font-size: 12px; }
+  dt { color: var(--muted); white-space: nowrap; }
+  dd { margin: 0; font-variant-numeric: tabular-nums; text-align: right; word-break: break-word; }
+  .mono { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 11px; }
+  .empty { color: var(--muted); font-size: 12px; font-style: italic; }
+  .pill { display: inline-block; padding: 1px 6px; border-radius: 8px; font-size: 10px; text-transform: uppercase; }
+  .pill.ok { background: var(--pill-ok); color: var(--ok); }
+  .pill.warn { background: var(--pill-warn); color: var(--warn); }
+  .pill.err { background: var(--pill-err); color: var(--err); }
+  .pill.unk { background: var(--pill-unk); color: var(--muted); }
+  .top-row { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .stat { display: flex; flex-direction: column; min-width: 100px; }
+  .stat .label { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.04em; }
+  .stat .value { font-size: 18px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; background: var(--pill-unk); border-radius: 3px; overflow: hidden; margin-top: 4px; min-width: 80px; }
+  .bar > span { display: block; height: 100%; background: var(--ok); }
+  .bar.warn > span { background: var(--warn); } .bar.err > span { background: var(--err); }
+</style>
+</head>
+<body>
+<div id="app">Loading…</div>
+<script>
+(function(){
+  function escape(s){ return String(s ?? '').replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+  function isObj(v){ return v && typeof v === 'object' && !Array.isArray(v); }
+  function kvList(o){
+    if (!isObj(o)) return '<span class="empty">No data</span>';
+    const entries = Object.entries(o).filter(([k,v]) => v != null && (typeof v !== 'object' || Array.isArray(v)));
+    if (!entries.length) return '<span class="empty">No simple fields</span>';
+    return '<dl>' + entries.slice(0, 12).map(([k,v]) => `<dt>${escape(k)}</dt><dd>${escape(Array.isArray(v) ? v.length + ' items' : v)}</dd>`).join('') + '</dl>';
+  }
+  function batteryPill(level, charging){
+    if (level == null) return '';
+    const k = level >= 50 ? 'ok' : level >= 20 ? 'warn' : 'err';
+    return `<span class="pill ${k}">${level}%${charging ? ' ⚡' : ''}</span>`;
+  }
+
+  function render(d) {
+    if (!d) return '<p class="empty">No data.</p>';
+    const battery = isObj(d.battery) ? d.battery : null;
+    const memory = isObj(d.memory) ? d.memory : null;
+    const cpu = d.cpu;
+    const network = isObj(d.network) ? d.network : null;
+    const caveats = Array.isArray(d.caveats) ? d.caveats : [];
+
+    const level = battery && typeof battery.level === 'number' ? battery.level : null;
+    const charging = battery ? (battery.acpowered === true || battery.usbpowered === true || battery.status === 2) : false;
+    const levelClass = level == null ? '' : level >= 50 ? '' : level >= 20 ? 'warn' : 'err';
+    const wifiOn = network?.wifi?.enabled;
+    const wifiIp = network?.wifi?.ipAddress;
+
+    const cavBlock = caveats.length === 0 ? '' :
+      `<section><h2>Caveats</h2><dl>${caveats.map(c => `<dt class="mono">!</dt><dd>${escape(c)}</dd>`).join('')}</dl></section>`;
+
+    return `
+      <h1>Device health</h1>
+      <div class="meta mono">${escape(d.serial || 'auto')}</div>
+      <div class="top-row">
+        <div class="stat">
+          <span class="label">Battery</span>
+          <span class="value">${level == null ? '—' : level + '%'} ${charging ? '⚡' : ''}</span>
+          <div class="bar ${levelClass}"><span style="width:${level || 0}%"></span></div>
+        </div>
+        <div class="stat">
+          <span class="label">RAM used</span>
+          <span class="value">${escape(memory?.usedRam || '—')}</span>
+          <span class="mono">${escape(memory?.totalRam ? 'of ' + memory.totalRam : '')}</span>
+        </div>
+        <div class="stat">
+          <span class="label">Wi-Fi</span>
+          <span class="value">${wifiOn ? 'on' : wifiOn === false ? 'off' : '—'}</span>
+          <span class="mono">${escape(wifiIp || '')}</span>
+        </div>
+      </div>
+      <div class="grid">
+        <section><h2>Battery</h2>${kvList(battery)}</section>
+        <section><h2>Memory</h2>${kvList(memory)}</section>
+        <section><h2>CPU</h2>${kvList(isObj(cpu) ? cpu : { value: 'array of ' + (Array.isArray(cpu) ? cpu.length : 0) })}</section>
+        <section><h2>Network</h2>${kvList(network?.wifi)}</section>
+      </div>
+      ${cavBlock}
+    `;
+  }
+  function update(){ document.getElementById('app').innerHTML = render(window.openai && window.openai.toolOutput); }
+  update();
+  window.addEventListener('openai:set_globals', update);
+})();
+</script>
+</body>
+</html>

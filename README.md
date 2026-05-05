@@ -17,6 +17,8 @@
 - **2-tier security** — `ANDROID_MCP_ALLOW_WRITE` (gates installs/taps/pushes) and `ANDROID_MCP_ALLOW_SHELL` (gates arbitrary `adb shell`) are separate flags. Distinct trust levels.
 - **Pure ADB** — no Appium, no uiautomator2, no Python bridge. Just the official Android Debug Bridge wrapped over `child_process`.
 - **Token-efficient by design** — 56 schema-trim sweep, `ANDROID_TOOLS`/`ANDROID_DISABLE` 9 categories, `search-tools` meta.
+- **Apps SDK card** — `device-health` renders as a snapshot card on ChatGPT clients (battery, RAM, Wi-Fi + 4-section grid) via `_meta["openai/outputTemplate"]`. Claude clients receive the same JSON content.
+- **stdio + Streamable HTTP** — defaults to stdio. Set `MCP_TRANSPORT=http` for ChatGPT Apps SDK or remote clients (Bearer auth via `MCP_HTTP_TOKEN`).
 
 ## Try this — 5 prompts
 
@@ -109,8 +111,15 @@ node dist/index.js
 | `ANDROID_MCP_ALLOW_SHELL` | ❌ | `false` | Enable arbitrary `adb shell` execution |
 | `ANDROID_TOOLS` | ❌ | — | Comma-sep allowlist of categories. Biggest token saver. |
 | `ANDROID_DISABLE` | ❌ | — | Comma-sep denylist. Ignored when `ANDROID_TOOLS` is set. |
+| `MCP_TRANSPORT` | ❌ | `stdio` | `http` to enable Streamable HTTP transport |
+| `MCP_HTTP_TOKEN` | conditional | — | Bearer token. Required when `MCP_TRANSPORT=http` |
+| `MCP_HTTP_PORT` | ❌ | `3000` | HTTP listen port |
+| `MCP_HTTP_HOST` | ❌ | `127.0.0.1` | HTTP bind host (DNS rebinding protection auto-enabled for localhost) |
+| `MCP_HTTP_SKIP_AUTH` | ❌ | `false` | Skip Bearer auth — e.g. behind a reverse proxy that handles it |
 
 **Categories** (9): `device`, `apps`, `ui`, `logcat`, `emulator`, `files`, `system`, `debug`, `shell` (always-gated by `ANDROID_MCP_ALLOW_SHELL`), plus always-on `meta`.
+
+When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (public liveness).
 
 ### Token efficiency
 
