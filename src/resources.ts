@@ -1,6 +1,12 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
+import { dirname, join } from "node:path";
 import { McpServer, ResourceTemplate } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { listDevices, getDeviceInfo } from "./tools/device.js";
 import { adbShell } from "./adb.js";
+
+const UI_DIR = join(dirname(fileURLToPath(import.meta.url)), "ui");
+const DEVICE_HEALTH_HTML = readFileSync(join(UI_DIR, "device-health.html"), "utf-8");
 
 /**
  * MCP Resources for hot Android entities.
@@ -271,5 +277,29 @@ export function registerResources(server: McpServer): void {
         processes,
       });
     },
+  );
+
+  // --- Apps SDK UI templates (ui:// scheme) ---
+  // Rendered by ChatGPT / Apps SDK clients via _meta["openai/outputTemplate"].
+  // Claude clients ignore the metadata and use the tool's text content instead.
+  server.registerResource(
+    "device-health-card",
+    "ui://widget/device-health.html",
+    {
+      title: "Device Health card",
+      description: "Apps SDK UI template rendered with device-health tool output",
+      mimeType: "text/html+skybridge",
+      _meta: {
+        "openai/outputTemplate": "ui://widget/device-health.html",
+        "ui.resourceUri": "ui://widget/device-health.html",
+      },
+    },
+    async (uri) => ({
+      contents: [{
+        uri: uri.toString(),
+        mimeType: "text/html+skybridge",
+        text: DEVICE_HEALTH_HTML,
+      }],
+    }),
   );
 }
