@@ -210,4 +210,93 @@ export function registerPrompts(server: McpServer): void {
       };
     },
   );
+
+  server.registerPrompt(
+    "anr-investigation",
+    {
+      title: "Investigate an ANR (Application Not Responding)",
+      description:
+        "Pull the latest ANR trace, identify the blocking thread/lock, correlate with logcat around the ANR timestamp, and produce a triage summary with suggested next steps.",
+      argsSchema: {
+        packageName: z.string().optional().describe("Package name to scope the investigation. Omit to pull the most recent ANR regardless of app."),
+        serial: z.string().optional().describe("Device serial. Omit when only one device is connected."),
+      },
+    },
+    ({ packageName, serial }) => {
+      const ser = serial ? ` with serial=${JSON.stringify(serial)}` : "";
+      const pkg = packageName ? `'${packageName}'` : "the most recent ANR";
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: [
+              `Investigate ${pkg} ANR on the device${ser ? " (serial " + JSON.stringify(serial) + ")" : ""}.`,
+              "",
+              "Steps:",
+              `1. Read \`/data/anr/anr_*\` traces. Use \`run-shell\` with command='ls -lt /data/anr/' (requires ANDROID_MCP_ALLOW_SHELL=true) to find the latest file. If shell isn't enabled, fall back to \`logcat-search\`${ser} with query='ANR in${packageName ? " " + packageName : ""}' to find ANR notifications and timestamps.`,
+              `2. Pull the trace contents and identify the **main thread** stack — the thread that was blocked. Look for one of:`,
+              "   - **lock contention**: 'waiting to lock' / 'held by tid=N' — grab the holder thread's stack too.",
+              "   - **binder transaction**: 'IPCThreadState' / 'BinderProxy.transactNative' — likely a system-service round-trip blocking.",
+              "   - **disk/network on main thread**: 'StrictMode' violations OR 'FileInputStream.read' / 'OkHttp' frames in the main stack.",
+              "   - **deadlock**: 'waiting on' cycle between two app threads.",
+              `3. Call \`logcat-search\`${ser} with query='AndroidRuntime|ANR' time-bounded to ±60s of the ANR timestamp to surface adjacent crashes / GC pauses / WindowManager 'no focused window' messages.`,
+              `4. Call \`get-cpu-info\`${ser} and \`get-memory-info\`${ser ? ` with serial=${JSON.stringify(serial)}` : ""} to capture system pressure at investigation time (a useful baseline if the issue is reproducible).`,
+              "5. Produce a triage summary:",
+              "   - Suspected category (lock contention / binder / disk on main / deadlock / GC pressure / unknown)",
+              "   - Blocking thread + blocker thread stacks (3-5 frames each)",
+              "   - Adjacent logcat lines (timestamp + tag + message)",
+              "   - One concrete next action (e.g. 'move FileWriter call off main thread', 'add timeout on Binder call', 'profile with Macrobenchmark to reproduce')",
+              "Do NOT call any write tools. Read-only investigation.",
+            ].join("\n"),
+          },
+        }],
+      };
+    },
+  );
+
+  server.registerPrompt(
+    "battery-drain-investigation",
+    {
+      title: "Investigate battery drain attributable to an app",
+      description:
+        "Use batterystats / dumpsys battery / wakelock data to identify an app's drain footprint, top wakelock holders, doze interactions, and produce a remediation plan.",
+      argsSchema: {
+        packageName: z.string().describe("Package name to investigate. Use list-installed-packages or detect from logs."),
+        serial: z.string().optional().describe("Device serial. Omit when only one device is connected."),
+      },
+    },
+    ({ packageName, serial }) => {
+      const ser = serial ? ` with serial=${JSON.stringify(serial)}` : "";
+      return {
+        messages: [{
+          role: "user",
+          content: {
+            type: "text",
+            text: [
+              `Investigate battery drain attributable to '${packageName}'${serial ? ` on serial ${JSON.stringify(serial)}` : ""}.`,
+              "",
+              "Steps:",
+              `1. Reset the counters baseline (so subsequent runs reflect the active period):`,
+              `   \`run-shell\`${ser} with command='dumpsys batterystats --reset' (requires ANDROID_MCP_ALLOW_SHELL=true). If shell isn't enabled, skip this step and read whatever's in the existing window.`,
+              `2. Capture battery state once (level, plugged, temperature) via \`get-battery-info\`${ser}.`,
+              `3. Read the wake-lock and CPU attribution slices for ${JSON.stringify(packageName)}:`,
+              `   - \`run-shell\`${ser} with command='dumpsys batterystats --since-checkin | grep -E "^9,${packageName},|^9,h,|wakelock"' — top consumers by package.`,
+              `   - \`run-shell\`${ser} with command='dumpsys power | grep -A 5 "Wake Locks"' — currently-held wakelocks.`,
+              `   - \`run-shell\`${ser} with command='dumpsys deviceidle | grep -E "STATE|whitelist"' — doze state and whether the app is on the battery whitelist.`,
+              `4. Read the JobScheduler / WorkManager state for ${JSON.stringify(packageName)}:`,
+              `   - \`run-shell\`${ser} with command='dumpsys jobscheduler | grep -A 10 ${JSON.stringify(packageName)}' — surfaces stuck or frequently-rescheduled jobs.`,
+              `5. Read the network attribution:`,
+              `   - \`run-shell\`${ser} with command='dumpsys netstats | grep -A 3 ${JSON.stringify(packageName)}' — bytes per uid.`,
+              "6. Produce a remediation plan:",
+              "   - Suspected category: chatty wakelock / frequent jobs / network polling / location pings / foreground service overuse / unknown",
+              "   - Top 3 offenders by approximate energy contribution (numbers from batterystats)",
+              "   - Concrete fixes (e.g. 'replace 30s polling with WorkManager + setBackoffCriteria', 'add JobInfo.setRequiresDeviceIdle if data isn't time-sensitive', 'check that the FCM listener exits ≤10s')",
+              "Do NOT call any write tools. Read-only investigation.",
+            ].join("\n"),
+          },
+        }],
+      };
+    },
+  );
 }

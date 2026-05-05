@@ -63,6 +63,8 @@ import {
   takeScreenshot,
   dumpUiHierarchySchema,
   dumpUiHierarchy,
+  uiSnapshotA11ySchema,
+  uiSnapshotA11y,
   tapSchema,
   tap,
   longPressSchema,
@@ -316,6 +318,13 @@ tool(
   "Dump the UI accessibility tree. Compact mode (default) returns only interactive elements with coordinates for token efficiency",
   dumpUiHierarchySchema.shape,
   wrapToolHandler(dumpUiHierarchy),
+);
+
+tool(
+  "ui-snapshot-a11y",
+  "Accessibility audit of the current screen. Walks the UIAutomator hierarchy and flags: interactive elements without text/content-desc (missing-label), images without content-desc (image-without-content-desc), touch targets smaller than minTouchTargetDp (default 48dp). Returns labeledRatePct, finding counts by category, and a duplicate-content-desc list. Read-only.",
+  uiSnapshotA11ySchema.shape,
+  wrapToolHandler(uiSnapshotA11y),
 );
 
 tool(

@@ -75,6 +75,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.13.0** (2026-05-05): 신규 `ui-snapshot-a11y` 도구 + 2개 워크플로우 Prompt(`anr-investigation`, `battery-drain-investigation`) 추가. `ui-snapshot-a11y`는 UIAutomator dump 기반 a11y 감사: 인터랙티브 element 중 label 없음(text & content-desc 둘 다 없음), ImageView/ImageButton에 content-desc 없음, touch target < `minTouchTargetDp`(default 48dp, Material/iOS 가이드라인) 자동 식별. labeledRatePct 계산, finding 카테고리별 카운트 + duplicate content-desc(TalkBack 혼란 원인) 별도 노출. screen density는 `wm density`로 자동 px→dp 변환. `anr-investigation` Prompt: `/data/anr/anr_*` 트레이스 + 차단 thread/락/binder/disk-on-main 휴리스틱 분류. `battery-drain-investigation` Prompt: `dumpsys batterystats|deviceidle|jobscheduler|netstats` 다중 슬라이스 → 카테고리(wakelock/jobs/network/location/foreground) 분류 + 구체적 remediation. 도구 75→76, prompts 5→7.
 - **v1.12.1** (2026-05-05): `@us-all/mcp-toolkit ^1.2.1` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.12.0** (2026-05-05): Apps SDK UI 카드 — `device-health` 도구 결과를 `_meta["openai/outputTemplate"]` 통해 ChatGPT/Apps SDK 클라이언트에서 카드로 렌더 (배터리 %, RAM 사용량, Wi-Fi 상태 + battery/memory/cpu/network 4개 sub-system grid). 새 리소스 `ui://widget/device-health.html` (`text/html+skybridge`). Claude 클라이언트는 `_meta` 무시 — non-breaking. 빌드 시 `src/ui/*.html`을 `dist/ui/`로 자동 복사.
 - **v1.11.0** (2026-05-05): `startMcpServer` 채택 — toolkit v1.2.0의 런타임 헬퍼로 stdio 부트스트랩을 1줄로 교체. `MCP_TRANSPORT=http`로 Streamable HTTP transport 옵트인 가능 (기본 stdio). Bearer 인증, `/health` 엔드포인트. 기존 stdio 사용자 영향 0.
