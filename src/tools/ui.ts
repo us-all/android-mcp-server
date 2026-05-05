@@ -202,6 +202,191 @@ export async function dumpUiHierarchy(
   };
 }
 
+// --- ui-snapshot-a11y ---
+
+export const uiSnapshotA11ySchema = z.object({
+  minTouchTargetDp: z.coerce.number().int().min(24).max(96).optional().default(48)
+    .describe("Minimum touch-target size in dp. Material/iOS guidelines recommend 48 (default). Elements smaller than this AND interactive are flagged."),
+  serial: z.string().optional().describe("Device serial (default: auto)"),
+});
+
+interface A11yFinding {
+  index: number;
+  class: string;
+  resourceId?: string;
+  text?: string;
+  contentDesc?: string;
+  bounds: string;
+  widthDp?: number;
+  heightDp?: number;
+  reasons: string[];
+}
+
+interface RawNode {
+  "@_class"?: string;
+  "@_clickable"?: string;
+  "@_long-clickable"?: string;
+  "@_focusable"?: string;
+  "@_text"?: string;
+  "@_content-desc"?: string;
+  "@_resource-id"?: string;
+  "@_bounds"?: string;
+  "@_enabled"?: string;
+  "@_password"?: string;
+  node?: RawNode | RawNode[];
+}
+
+function boundsRect(boundsStr: string): { x1: number; y1: number; x2: number; y2: number } | null {
+  const m = boundsStr.match(/\[(\d+),(\d+)\]\[(\d+),(\d+)\]/);
+  if (!m) return null;
+  return { x1: +m[1], y1: +m[2], x2: +m[3], y2: +m[4] };
+}
+
+function isImageClass(cls: string): boolean {
+  return /ImageView|ImageButton$/.test(cls);
+}
+
+function pxToDp(px: number, density: number): number {
+  return density > 0 ? Math.round(px / density) : px;
+}
+
+export async function uiSnapshotA11y(
+  params: z.infer<typeof uiSnapshotA11ySchema>,
+) {
+  const opts = params.serial ? { serial: params.serial } : undefined;
+  const caveats: string[] = [];
+
+  // Pull screen density for px→dp conversion. Falls back to 1 if unavailable.
+  let density = 1;
+  try {
+    const wmDensityRaw = await adbShell("wm density", opts);
+    const m = wmDensityRaw.match(/Physical density:\s*(\d+)/);
+    if (m) density = parseInt(m[1], 10) / 160;
+  } catch (err) {
+    caveats.push(`density fetch failed: ${err instanceof Error ? err.message : String(err)}`);
+  }
+
+  await adbShell("uiautomator dump /sdcard/window_dump.xml", opts);
+  const xml = await adbShell("cat /sdcard/window_dump.xml", opts);
+
+  const parser = new XMLParser({ ignoreAttributes: false, attributeNamePrefix: "@_" });
+  const parsed = parser.parse(xml);
+  const hierarchy = parsed?.hierarchy as RawNode | undefined;
+
+  if (!hierarchy) {
+    return {
+      summary: { interactive: 0, findings: 0, density, minTouchTargetDp: params.minTouchTargetDp },
+      findings: [],
+      raw: xml.substring(0, 500),
+      caveats: [...caveats, "uiautomator dump returned no hierarchy"],
+    };
+  }
+
+  // Walk all nodes.
+  const findings: A11yFinding[] = [];
+  let interactiveCount = 0;
+  let labeledCount = 0;
+  const seenContentDescs = new Map<string, number>();
+
+  function visit(node: RawNode, idx: { v: number }): void {
+    const cls = (node["@_class"] ?? "").split(".").pop() ?? "";
+    const clickable = node["@_clickable"] === "true";
+    const longClickable = node["@_long-clickable"] === "true";
+    const focusable = node["@_focusable"] === "true";
+    const enabled = node["@_enabled"] !== "false";
+    const isPassword = node["@_password"] === "true";
+    const text = node["@_text"] ?? "";
+    const contentDesc = node["@_content-desc"] ?? "";
+    const bounds = node["@_bounds"] ?? "";
+    const interactive = (clickable || longClickable || focusable) && enabled;
+
+    if (interactive) {
+      interactiveCount++;
+      if (text || contentDesc) labeledCount++;
+    }
+
+    const reasons: string[] = [];
+
+    // Missing label on an interactive element (skip password fields — text is masked).
+    if (interactive && !text && !contentDesc && !isPassword) {
+      reasons.push("missing-label (no text, no content-desc)");
+    }
+
+    // ImageView / ImageButton without content-desc.
+    if (isImageClass(cls) && !contentDesc && !text) {
+      reasons.push("image-without-content-desc");
+    }
+
+    // Touch target too small.
+    let widthDp: number | undefined;
+    let heightDp: number | undefined;
+    if (interactive && bounds) {
+      const r = boundsRect(bounds);
+      if (r) {
+        widthDp = pxToDp(r.x2 - r.x1, density);
+        heightDp = pxToDp(r.y2 - r.y1, density);
+        if (widthDp < params.minTouchTargetDp || heightDp < params.minTouchTargetDp) {
+          reasons.push(`touch-target-too-small (${widthDp}×${heightDp}dp < ${params.minTouchTargetDp}dp)`);
+        }
+      }
+    }
+
+    // Track duplicates for the duplicate-label finding pass.
+    if (contentDesc) {
+      seenContentDescs.set(contentDesc, (seenContentDescs.get(contentDesc) ?? 0) + 1);
+    }
+
+    if (reasons.length > 0) {
+      const f: A11yFinding = {
+        index: idx.v,
+        class: cls,
+        bounds,
+        reasons,
+      };
+      if (text) f.text = text;
+      if (contentDesc) f.contentDesc = contentDesc;
+      const rid = node["@_resource-id"];
+      if (rid) f.resourceId = rid.split("/").pop();
+      if (widthDp != null) f.widthDp = widthDp;
+      if (heightDp != null) f.heightDp = heightDp;
+      findings.push(f);
+    }
+
+    idx.v++;
+
+    const children = node.node;
+    if (Array.isArray(children)) for (const c of children) visit(c, idx);
+    else if (children) visit(children as RawNode, idx);
+  }
+
+  visit(hierarchy, { v: 0 });
+
+  // Second pass: surface duplicate content-descs (TalkBack confusion).
+  const duplicateContentDescs = [...seenContentDescs.entries()]
+    .filter(([, n]) => n >= 3)
+    .map(([desc, count]) => ({ contentDesc: desc, count }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5);
+
+  return {
+    summary: {
+      interactiveElements: interactiveCount,
+      labeledInteractive: labeledCount,
+      labeledRatePct: interactiveCount > 0 ? Math.round((labeledCount / interactiveCount) * 1000) / 10 : null,
+      findings: findings.length,
+      missingLabel: findings.filter((f) => f.reasons.some((r) => r.startsWith("missing-label"))).length,
+      smallTouchTargets: findings.filter((f) => f.reasons.some((r) => r.startsWith("touch-target"))).length,
+      imageWithoutDesc: findings.filter((f) => f.reasons.some((r) => r.startsWith("image-without"))).length,
+      density,
+      minTouchTargetDp: params.minTouchTargetDp,
+    },
+    findings: findings.slice(0, 50),
+    truncated: findings.length > 50,
+    duplicateContentDescs,
+    caveats,
+  };
+}
+
 export async function tap(params: z.infer<typeof tapSchema>) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
