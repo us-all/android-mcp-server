@@ -1,0 +1,52 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.us-all/android",
+  "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
+  "repository": {
+    "url": "https://github.com/us-all/android-mcp-server",
+    "source": "github"
+  },
+  "version": "1.13.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@us-all/android-mcp",
+      "version": "1.13.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "ADB_PATH",
+          "description": "Path to adb binary. Default: 'adb' on PATH."
+        },
+        {
+          "name": "ANDROID_HOME",
+          "description": "Android SDK root. Used to resolve adb if ADB_PATH not set."
+        },
+        {
+          "name": "ANDROID_SERIAL",
+          "description": "Default device serial when multiple devices are connected."
+        },
+        {
+          "name": "ANDROID_TOOLS",
+          "description": "Comma-separated category allowlist. Default: all categories enabled."
+        },
+        {
+          "name": "ANDROID_DISABLE",
+          "description": "Comma-separated category disablelist."
+        },
+        {
+          "name": "ANDROID_MCP_ALLOW_SHELL",
+          "description": "Set to 'true' to enable arbitrary shell command execution. Default disabled.",
+          "default": "false"
+        },
+        {
+          "name": "ANDROID_MCP_ALLOW_WRITE",
+          "description": "Set to 'true' to enable write/destructive tools. Default read-only.",
+          "default": "false"
+        }
+      ]
+    }
+  ]
+}
