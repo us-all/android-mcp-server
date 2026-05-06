@@ -8,6 +8,7 @@
 [![downloads](https://img.shields.io/npm/dm/@us-all/android-mcp)](https://www.npmjs.com/package/@us-all/android-mcp)
 [![tools](https://img.shields.io/badge/tools-75-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
+[![Glama MCP server](https://glama.ai/mcp/servers/us-all/android-mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/us-all/android-mcp-server)
 
 ## What it does that others don't
 
