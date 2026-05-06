@@ -1,7 +1,7 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.us-all/android",
-  "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
+  "description": "Android MCP — ADB-based device, apps, UI, logcat, emulator, files, system, debug",
   "repository": {
     "url": "https://github.com/us-all/android-mcp-server",
     "source": "github"
