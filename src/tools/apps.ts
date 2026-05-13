@@ -1,6 +1,15 @@
 import { z } from "zod";
 import { adb, adbShell } from "../adb.js";
-import { assertWriteAllowed } from "./utils.js";
+import {
+  assertWriteAllowed,
+  formatBroadcastExtras,
+  shellEscape,
+  validateAction,
+  validateActivityName,
+  validateComponent,
+  validatePackageName,
+  validatePermission,
+} from "./utils.js";
 
 // --- Schemas ---
 
@@ -117,6 +126,7 @@ export async function getPackageInfo(
   params: z.infer<typeof getPackageInfoSchema>,
 ) {
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const output = await adbShell(
     `dumpsys package ${params.packageName}`,
     opts,
@@ -179,6 +189,7 @@ export async function uninstallApp(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const args = ["uninstall"];
   if (params.keepData) args.push("-k");
   args.push(params.packageName);
@@ -191,9 +202,12 @@ export async function launchApp(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
 
   if (params.activity) {
+    validateActivityName(params.activity);
     const component = `${params.packageName}/${params.activity}`;
+    validateComponent(component);
     const output = await adbShell(`am start -n ${component}`, opts);
     return { result: output };
   }
@@ -210,6 +224,7 @@ export async function stopApp(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const output = await adbShell(`am force-stop ${params.packageName}`, opts);
   return { result: output || "App stopped successfully" };
 }
@@ -302,6 +317,7 @@ export async function clearAppData(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const output = await adbShell(`pm clear ${params.packageName}`, opts);
   return { result: output.trim() };
 }
@@ -311,6 +327,8 @@ export async function grantPermission(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
+  validatePermission(params.permission);
   await adbShell(
     `pm grant ${params.packageName} ${params.permission}`,
     opts,
@@ -325,6 +343,8 @@ export async function revokePermission(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
+  validatePermission(params.permission);
   await adbShell(
     `pm revoke ${params.packageName} ${params.permission}`,
     opts,
@@ -338,7 +358,7 @@ export async function openUrl(params: z.infer<typeof openUrlSchema>) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
   const output = await adbShell(
-    `am start -a android.intent.action.VIEW -d '${params.url}'`,
+    `am start -a android.intent.action.VIEW -d ${shellEscape(params.url)}`,
     opts,
   );
   return { result: output };
@@ -349,9 +369,16 @@ export async function sendBroadcast(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validateAction(params.action);
   let cmd = `am broadcast -a ${params.action}`;
-  if (params.component) cmd += ` -n ${params.component}`;
-  if (params.extras) cmd += ` ${params.extras}`;
+  if (params.component) {
+    validateComponent(params.component);
+    cmd += ` -n ${params.component}`;
+  }
+  if (params.extras) {
+    const extras = formatBroadcastExtras(params.extras);
+    if (extras) cmd += ` ${extras}`;
+  }
   const output = await adbShell(cmd, opts);
   return { result: output };
 }
@@ -407,6 +434,7 @@ export async function isAppInstalled(
   params: z.infer<typeof isAppInstalledSchema>,
 ) {
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const output = await adbShell(`pm list packages ${params.packageName}`, opts);
   const installed = output.split("\n").some(
     (l) => l.trim() === `package:${params.packageName}`,
@@ -418,6 +446,7 @@ export async function getAppIntents(
   params: z.infer<typeof getAppIntentsSchema>,
 ) {
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validatePackageName(params.packageName);
   const output = await adbShell(
     `dumpsys package ${params.packageName} | grep -A 1 "android.intent.action"`,
     opts,

@@ -5,8 +5,27 @@ vi.mock("../src/adb.js", () => ({
   adbShell: vi.fn(),
 }));
 
+// Mock config to allow writes in tests
+vi.mock("../src/config.js", () => ({
+  config: {
+    adbPath: "adb",
+    serial: "",
+    allowWrite: true,
+    allowShell: true,
+    androidHome: "",
+  },
+}));
+
 import { adbShell } from "../src/adb.js";
-import { getBatteryInfo, getNetworkInfo } from "../src/tools/system.js";
+import {
+  changeSetting,
+  getBatteryInfo,
+  getNetworkInfo,
+  getSetting,
+  setDisplayDensity,
+  setDisplaySize,
+  unlockDevice,
+} from "../src/tools/system.js";
 
 const mockAdbShell = vi.mocked(adbShell);
 
@@ -81,5 +100,64 @@ describe("getNetworkInfo", () => {
 
     expect(result.wifi.enabled).toBe(false);
     expect(result.wifi.ipAddress).toBeUndefined();
+  });
+});
+
+describe("settings shell argument safety", () => {
+  it("should validate setting keys and escape values", async () => {
+    mockAdbShell.mockResolvedValueOnce("").mockResolvedValueOnce("hello world\n");
+
+    const result = await changeSetting({
+      namespace: "system",
+      key: "screen_off_timeout",
+      value: "hello world",
+    });
+
+    expect(mockAdbShell).toHaveBeenNthCalledWith(
+      1,
+      "settings put system screen_off_timeout 'hello world'",
+      undefined,
+    );
+    expect(result.currentValue).toBe("hello world");
+  });
+
+  it("should reject invalid setting keys", async () => {
+    await expect(
+      getSetting({ namespace: "secure", key: "name;id" }),
+    ).rejects.toThrow("Invalid setting key");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
+  });
+});
+
+describe("display shell argument safety", () => {
+  it("should validate display size numbers before shelling out", async () => {
+    await expect(
+      setDisplaySize({ width: -1, height: 1920 }),
+    ).rejects.toThrow("Invalid display width");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
+  });
+
+  it("should validate display density numbers before shelling out", async () => {
+    await expect(
+      setDisplayDensity({ dpi: 0 }),
+    ).rejects.toThrow("Invalid display density");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
+  });
+});
+
+describe("unlock shell argument safety", () => {
+  it("should escape PIN text passed to input", async () => {
+    mockAdbShell.mockResolvedValue("");
+
+    await unlockDevice({ pin: "12'34;id" });
+
+    expect(mockAdbShell).toHaveBeenNthCalledWith(
+      3,
+      "input text '12'\\''34;id'",
+      undefined,
+    );
   });
 });

@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { adb, adbShell } from "../adb.js";
-import { assertWriteAllowed } from "./utils.js";
+import { assertWriteAllowed, shellEscape, validateDevicePath } from "./utils.js";
 
 // --- Schemas ---
 
@@ -63,7 +63,8 @@ export const deleteFileSchema = z.object({
 export async function listFiles(params: z.infer<typeof listFilesSchema>) {
   const opts = params.serial ? { serial: params.serial } : undefined;
   const flag = params.recursive ? "-lR" : "-la";
-  const output = await adbShell(`ls ${flag} ${params.path}`, opts);
+  validateDevicePath(params.path);
+  const output = await adbShell(`ls ${flag} ${shellEscape(params.path)}`, opts);
 
   const lines = output.split("\n").filter(Boolean);
   return {
@@ -96,6 +97,7 @@ export async function deleteFile(params: z.infer<typeof deleteFileSchema>) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
   const flag = params.recursive ? "-rf" : "-f";
-  const output = await adbShell(`rm ${flag} ${params.path}`, opts);
+  validateDevicePath(params.path);
+  const output = await adbShell(`rm ${flag} ${shellEscape(params.path)}`, opts);
   return { result: output || `Deleted: ${params.path}` };
 }

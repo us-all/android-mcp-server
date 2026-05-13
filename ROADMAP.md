@@ -12,7 +12,7 @@
 - Settings read, display size/density override
 - Keep screen on, port forwarding (forward/reverse/list/remove)
 
-## v1.2.0 (Current)
+## v1.2.0 (Released)
 - **17 new tools** → 69 total
 - [x] WiFi/mobile data toggle
 - [x] Notification panel open
@@ -25,6 +25,10 @@
 - [x] Settings list (dump all settings in namespace)
 - [x] Intent/deep-link discovery per package
 - [x] Performance profiling (meminfo, gfxinfo, cpuinfo)
+
+## Current (v1.13.x)
+- 76 tools across 9 filterable categories plus always-on meta discovery
+- Node.js 22+ / pnpm 10 / `@modelcontextprotocol/sdk` 1.29+
 
 ## v2.0.0 (Future)
 

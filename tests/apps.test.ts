@@ -21,6 +21,9 @@ import {
   listPackages,
   getPackageInfo,
   getCurrentActivity,
+  openUrl,
+  sendBroadcast,
+  stopApp,
 } from "../src/tools/apps.js";
 
 const mockAdbShell = vi.mocked(adbShell);
@@ -124,6 +127,14 @@ describe("getPackageInfo", () => {
     expect(result.versionCode).toBeUndefined();
     expect(result.targetSdk).toBeUndefined();
   });
+
+  it("should reject invalid package names before shelling out", async () => {
+    await expect(
+      getPackageInfo({ packageName: "com.example;id" }),
+    ).rejects.toThrow("Invalid package name");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
+  });
 });
 
 describe("getCurrentActivity", () => {
@@ -148,5 +159,52 @@ describe("getCurrentActivity", () => {
 
     expect(result.resumedActivity).toBeUndefined();
     expect(result.currentFocus).toBe("StatusBar");
+  });
+});
+
+describe("shell argument safety", () => {
+  it("should escape URLs passed to am start", async () => {
+    mockAdbShell.mockResolvedValue("");
+
+    await openUrl({ url: "https://example.com/a'b?x=$(id)" });
+
+    expect(mockAdbShell).toHaveBeenCalledWith(
+      "am start -a android.intent.action.VIEW -d 'https://example.com/a'\\''b?x=$(id)'",
+      undefined,
+    );
+  });
+
+  it("should validate package names used in shell commands", async () => {
+    await expect(
+      stopApp({ packageName: "com.example.app;reboot" }),
+    ).rejects.toThrow("Invalid package name");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
+  });
+
+  it("should validate broadcast fields and escape extra values", async () => {
+    mockAdbShell.mockResolvedValue("");
+
+    await sendBroadcast({
+      action: "com.example.ACTION",
+      component: "com.example.app/.Receiver",
+      extras: "--es payload a'b --ei count 5",
+    });
+
+    expect(mockAdbShell).toHaveBeenCalledWith(
+      "am broadcast -a com.example.ACTION -n com.example.app/.Receiver --es payload 'a'\\''b' --ei count '5'",
+      undefined,
+    );
+  });
+
+  it("should reject malformed broadcast extras", async () => {
+    await expect(
+      sendBroadcast({
+        action: "com.example.ACTION",
+        extras: "--es payload",
+      }),
+    ).rejects.toThrow("requires a key and value");
+
+    expect(mockAdbShell).not.toHaveBeenCalled();
   });
 });

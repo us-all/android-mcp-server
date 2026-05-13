@@ -2,11 +2,11 @@
 
 > **The Android diagnostic & forensic MCP — when an app crashes, leaks memory, drains battery, or behaves unexpectedly, this is what you point at the device.**
 >
-> 75 tools across logcat / dumpsys / package internals / system properties / processes. 5 MCP Prompts (crash-investigation, memory-leak-detection, permission-audit, app-startup-profile, ui-element-locator) and a `device-health` aggregation. Pure ADB, no Appium / uiautomator2 dependency. 2-tier security (write + shell gates).
+> 76 tools across logcat / dumpsys / package internals / system properties / processes. 5 MCP Prompts (crash-investigation, memory-leak-detection, permission-audit, app-startup-profile, ui-element-locator) and a `device-health` aggregation. Pure ADB, no Appium / uiautomator2 dependency. 2-tier security (write + shell gates).
 
 [![npm](https://img.shields.io/npm/v/@us-all/android-mcp)](https://www.npmjs.com/package/@us-all/android-mcp)
 [![downloads](https://img.shields.io/npm/dm/@us-all/android-mcp)](https://www.npmjs.com/package/@us-all/android-mcp)
-[![tools](https://img.shields.io/badge/tools-75-blue)](#tools)
+[![tools](https://img.shields.io/badge/tools-76-blue)](#tools)
 [![@us-all standard](https://img.shields.io/badge/built%20to-%40us--all%20MCP%20standard-blue)](https://github.com/us-all/mcp-toolkit/blob/main/STANDARD.md)
 [![Glama MCP server](https://glama.ai/mcp/servers/us-all/android-mcp-server/badges/score.svg)](https://glama.ai/mcp/servers/us-all/android-mcp-server)
 
@@ -126,7 +126,7 @@ When `MCP_TRANSPORT=http`: `POST /mcp` (Bearer-auth JSON-RPC) + `GET /health` (p
 
 | Scenario | Tools | Schema tokens | vs default |
 |----------|------:|--------------:|-----------:|
-| default (all categories) | 75 | 9,200 | — |
+| default (all categories) | 76 | 9,200 | — |
 | typical (`ANDROID_TOOLS=device,ui,apps,logcat`) | 37 | 5,000 | −46% |
 | narrow (`ANDROID_TOOLS=device,ui`) | 19 | **2,500** | **−73%** |
 
@@ -155,7 +155,7 @@ URI-based read-only entities:
 - `android://app/{packageName}/activities` — activities exposed by a package (exported/launchable flags)
 - `android://device/{serial}/processes` — running processes
 
-## Tools (75)
+## Tools (76)
 
 9 categories. Use `search-tools` to discover at runtime; full list collapsed below.
 
@@ -163,7 +163,7 @@ URI-based read-only entities:
 |----------|------:|
 | System (battery / network / settings / display / orientation / port-fwd / wifi / mobile-data) | 19 |
 | Apps (install / launch / permissions / intents / data clear) | 14 |
-| UI (tap / swipe / screenshot / hierarchy / annotated tap-by-index / screen recording) | 13 |
+| UI (tap / swipe / screenshot / hierarchy / accessibility / annotated tap-by-index / screen recording) | 14 |
 | Emulator (AVD start/stop, snapshot mgmt) | 7 |
 | Device (list / info / properties / wireless connect) | 5 |
 | Debug (bugreport / mem / gfx / cpu / doctor) | 5 |
@@ -182,8 +182,8 @@ URI-based read-only entities:
 ### Apps (14)
 `list-packages`, `get-package-info`, `install-app`, `uninstall-app`, `launch-app`, `stop-app`, `clear-app-data`, `grant-permission`, `revoke-permission`, `open-url`, `send-broadcast`, `get-current-activity`, `is-app-installed`, `get-app-intents`
 
-### UI Automation (13)
-`take-screenshot`, `dump-ui-hierarchy`, `tap`, `long-press`, `swipe`, `input-text`, `press-key`, `drag-and-drop`, `start-screen-recording`, `pull-screen-recording`, `double-tap`, `take-annotated-screenshot`, `tap-element`
+### UI Automation (14)
+`take-screenshot`, `dump-ui-hierarchy`, `ui-snapshot-a11y`, `tap`, `long-press`, `swipe`, `input-text`, `press-key`, `drag-and-drop`, `start-screen-recording`, `pull-screen-recording`, `double-tap`, `take-annotated-screenshot`, `tap-element`
 
 ### Logcat (4)
 `get-logcat`, `clear-logcat`, `search-logcat`, `get-crash-logs`
@@ -242,7 +242,7 @@ Built on [`@us-all/mcp-toolkit`](https://github.com/us-all/mcp-toolkit):
 
 ## Tech stack
 
-Node.js 20+ • TypeScript strict ESM • pnpm • `@modelcontextprotocol/sdk` 1.27+ • zod v4 • fast-xml-parser • vitest (fork pool isolation).
+Node.js 22+ • TypeScript strict ESM • pnpm 10 • `@modelcontextprotocol/sdk` 1.29+ • zod v4 • fast-xml-parser • vitest (fork pool isolation).
 
 ## License
 

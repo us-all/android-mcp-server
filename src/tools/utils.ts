@@ -62,6 +62,22 @@ export function validateSettingValue(value: string): void {
   }
 }
 
+/** Validate positive integer values used in Android shell commands. */
+export function validatePositiveInteger(value: number, name: string): void {
+  if (!Number.isInteger(value) || value <= 0) {
+    throw new Error(`Invalid ${name}: ${JSON.stringify(value)}. Expected a positive integer.`);
+  }
+}
+
+/** Validate an Android activity class name (e.g. .MainActivity or com.example.MainActivity). */
+export function validateActivityName(activity: string): void {
+  if (!/^\.?[a-zA-Z][a-zA-Z0-9_.]*$/.test(activity)) {
+    throw new Error(
+      `Invalid activity: ${JSON.stringify(activity)}. Expected an activity class name like .MainActivity`,
+    );
+  }
+}
+
 /** Validate Android keycode format (e.g. KEYCODE_BACK, KEYCODE_VOLUME_UP). */
 export function validateKeycode(keycode: string): void {
   if (!/^KEYCODE_[A-Z0-9_]+$/.test(keycode)) {
@@ -133,6 +149,41 @@ export function validateExtras(extras: string): void {
     // value is validated by shellEscape when constructing the command
     i += 3;
   }
+}
+
+/** Validate and escape Android broadcast extras for safe adb shell interpolation. */
+export function formatBroadcastExtras(extras: string): string {
+  const trimmed = extras.trim();
+  if (!trimmed) return "";
+
+  const tokens = trimmed.split(/\s+/);
+  const validFlags = new Set(["--es", "--ei", "--ez", "--ef", "--el", "--eu", "--esa"]);
+  const parts: string[] = [];
+  let i = 0;
+
+  while (i < tokens.length) {
+    const flag = tokens[i];
+    if (!validFlags.has(flag)) {
+      throw new Error(
+        `Invalid extras flag: ${JSON.stringify(flag)}. Allowed: ${[...validFlags].join(", ")}`,
+      );
+    }
+    if (i + 2 >= tokens.length) {
+      throw new Error(`Extras flag ${flag} requires a key and value.`);
+    }
+
+    const key = tokens[i + 1];
+    if (!/^[a-zA-Z][a-zA-Z0-9_.]*$/.test(key)) {
+      throw new Error(
+        `Invalid extras key: ${JSON.stringify(key)}. Only alphanumeric, dots, and underscores are allowed.`,
+      );
+    }
+
+    parts.push(flag, key, shellEscape(tokens[i + 2]));
+    i += 3;
+  }
+
+  return parts.join(" ");
 }
 
 /** Validate device file path (must be absolute, no traversal). */

@@ -1,6 +1,12 @@
 import { z } from "zod";
 import { adb, adbShell } from "../adb.js";
-import { assertWriteAllowed } from "./utils.js";
+import {
+  assertWriteAllowed,
+  shellEscape,
+  validatePositiveInteger,
+  validateSettingKey,
+  validateSettingValue,
+} from "./utils.js";
 
 // --- Schemas ---
 
@@ -91,8 +97,10 @@ export async function changeSetting(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validateSettingKey(params.key);
+  validateSettingValue(params.value);
   await adbShell(
-    `settings put ${params.namespace} ${params.key} ${params.value}`,
+    `settings put ${params.namespace} ${params.key} ${shellEscape(params.value)}`,
     opts,
   );
 
@@ -187,6 +195,7 @@ export async function getSetting(
   params: z.infer<typeof getSettingSchema>,
 ) {
   const opts = params.serial ? { serial: params.serial } : undefined;
+  validateSettingKey(params.key);
   const value = await adbShell(
     `settings get ${params.namespace} ${params.key}`,
     opts,
@@ -203,7 +212,12 @@ export async function setDisplaySize(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
-  if (params.width && params.height) {
+  if (params.width !== undefined || params.height !== undefined) {
+    if (params.width === undefined || params.height === undefined) {
+      throw new Error("Display width and height must be provided together.");
+    }
+    validatePositiveInteger(params.width, "display width");
+    validatePositiveInteger(params.height, "display height");
     await adbShell(`wm size ${params.width}x${params.height}`, opts);
   } else {
     await adbShell("wm size reset", opts);
@@ -217,7 +231,8 @@ export async function setDisplayDensity(
 ) {
   assertWriteAllowed();
   const opts = params.serial ? { serial: params.serial } : undefined;
-  if (params.dpi) {
+  if (params.dpi !== undefined) {
+    validatePositiveInteger(params.dpi, "display density");
     await adbShell(`wm density ${params.dpi}`, opts);
   } else {
     await adbShell("wm density reset", opts);
@@ -411,7 +426,7 @@ export async function unlockDevice(
   await adbShell("input swipe 540 1800 540 800 300", opts);
   // Enter PIN if provided
   if (params.pin) {
-    await adbShell(`input text ${params.pin}`, opts);
+    await adbShell(`input text ${shellEscape(params.pin)}`, opts);
     await adbShell("input keyevent KEYCODE_ENTER", opts);
   }
   return { result: "Device unlock attempted" };

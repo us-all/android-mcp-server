@@ -4,6 +4,11 @@ import {
   ShellBlockedError,
   assertWriteAllowed,
   assertShellAllowed,
+  formatBroadcastExtras,
+  shellEscape,
+  validateDevicePath,
+  validatePackageName,
+  validatePositiveInteger,
   wrapToolHandler,
 } from "../src/tools/utils.js";
 
@@ -97,5 +102,32 @@ describe("wrapToolHandler", () => {
     });
     const result = await handler({});
     expect(result.isError).toBe(true);
+  });
+});
+
+describe("shell safety helpers", () => {
+  it("should single-quote and escape shell arguments", () => {
+    expect(shellEscape("a'b $(id);")).toBe("'a'\\''b $(id);'");
+  });
+
+  it("should validate package names", () => {
+    expect(() => validatePackageName("com.example.app")).not.toThrow();
+    expect(() => validatePackageName("com.example;id")).toThrow("Invalid package name");
+  });
+
+  it("should validate device paths", () => {
+    expect(() => validateDevicePath("/sdcard/My Files")).not.toThrow();
+    expect(() => validateDevicePath("/sdcard/../data")).toThrow("Path traversal");
+  });
+
+  it("should validate positive integers", () => {
+    expect(() => validatePositiveInteger(1, "dpi")).not.toThrow();
+    expect(() => validatePositiveInteger(1.5, "dpi")).toThrow("Invalid dpi");
+  });
+
+  it("should format broadcast extras with escaped values", () => {
+    expect(formatBroadcastExtras("--es payload a'b --ei count 5")).toBe(
+      "--es payload 'a'\\''b' --ei count '5'",
+    );
   });
 });

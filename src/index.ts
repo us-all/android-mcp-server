@@ -828,7 +828,7 @@ currentCategory = "meta";
 
 tool(
   "search-tools",
-  "Discover available tools by natural language query. Returns matching tool names + descriptions across all categories. Use this first to navigate the 72+ tool surface efficiently.",
+  "Discover available tools by natural language query. Returns matching tool names + descriptions across all categories. Use this first to navigate the 76-tool surface efficiently.",
   searchToolsSchema.shape,
   wrapToolHandler(searchTools),
 );
