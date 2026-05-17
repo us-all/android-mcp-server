@@ -1,6 +1,6 @@
 {
   "name": "@us-all/android-mcp",
-  "version": "1.13.4",
+  "version": "1.13.5",
   "mcpName": "io.github.us-all/android",
   "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
   "type": "module",
@@ -24,7 +24,8 @@
       "@hono/node-server": ">=1.19.13",
       "fast-uri": "^3.1.2",
       "ip-address": "^10.1.1",
-      "vite": "^8.0.5"
+      "vite": "^8.0.5",
+      "fast-xml-builder": "^1.1.7"
     }
   },
   "scripts": {

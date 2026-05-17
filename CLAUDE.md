@@ -75,6 +75,8 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.13.5** (2026-05-17): 보안 — `pnpm.overrides`에 `fast-xml-builder ^1.1.7` 추가 (GHSA-5wm8-gmm8-39j9, high/CVSS 6.1: attribute injection bypass via quote characters). `fast-xml-parser ^5.7.x`의 transitive. 5/15 wave 미커버 신규 alert로 직접 패치. 코드 변경 0줄, 90/90 test.
+- **v1.13.4** (2026-05-15): 보안 — `pnpm.overrides`에 fast-uri ^3.1.2 / hono ^4.12.18 / ip-address ^10.1.1 추가 (CVE-2026 transitive). 기존 vite/@hono/node-server overrides 보존. toolkit ^1.2.2 → ^1.2.3.
 - **v1.13.3** (2026-05-15): `@us-all/mcp-toolkit ^1.2.2` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
 - **v1.13.1** (2026-05-06): MCP Server Registry 발행 — `mcpName: "io.github.us-all/android"` 추가 + 루트 `server.json` (npm 패키지 + stdio transport + 7개 환경변수 메타데이터, ANDROID_MCP_ALLOW_SHELL/ALLOW_WRITE 게이트 명시). 코드 변경 0줄.
 - **v1.13.0** (2026-05-05): 신규 `ui-snapshot-a11y` 도구 + 2개 워크플로우 Prompt(`anr-investigation`, `battery-drain-investigation`) 추가. `ui-snapshot-a11y`는 UIAutomator dump 기반 a11y 감사: 인터랙티브 element 중 label 없음(text & content-desc 둘 다 없음), ImageView/ImageButton에 content-desc 없음, touch target < `minTouchTargetDp`(default 48dp, Material/iOS 가이드라인) 자동 식별. labeledRatePct 계산, finding 카테고리별 카운트 + duplicate content-desc(TalkBack 혼란 원인) 별도 노출. screen density는 `wm density`로 자동 px→dp 변환. `anr-investigation` Prompt: `/data/anr/anr_*` 트레이스 + 차단 thread/락/binder/disk-on-main 휴리스틱 분류. `battery-drain-investigation` Prompt: `dumpsys batterystats|deviceidle|jobscheduler|netstats` 다중 슬라이스 → 카테고리(wakelock/jobs/network/location/foreground) 분류 + 구체적 remediation. 도구 75→76, prompts 5→7.
