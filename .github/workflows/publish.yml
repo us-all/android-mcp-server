@@ -52,3 +52,35 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
+
+  registry-publish:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+      - name: Sync server.json version to package.json
+        run: |
+          VER=$(node -p "require('./package.json').version")
+          echo "Syncing server.json to version $VER"
+          node -e "
+            const fs = require('fs');
+            const s = JSON.parse(fs.readFileSync('server.json', 'utf8'));
+            s.version = '$VER';
+            s.packages[0].version = '$VER';
+            fs.writeFileSync('server.json', JSON.stringify(s, null, 2) + '\n');
+          "
+          node -p "require('./server.json').version"
+      - name: Install mcp-publisher
+        env:
+          MCP_PUBLISHER_VERSION: v1.7.9
+        run: |
+          curl -sSL "https://github.com/modelcontextprotocol/registry/releases/download/${MCP_PUBLISHER_VERSION}/mcp-publisher_linux_amd64.tar.gz" | tar xz mcp-publisher
+          sudo mv mcp-publisher /usr/local/bin/
+          mcp-publisher --version
+      - name: Login via GitHub OIDC
+        run: mcp-publisher login github-oidc
+      - name: Publish to MCP Registry
+        run: mcp-publisher publish
