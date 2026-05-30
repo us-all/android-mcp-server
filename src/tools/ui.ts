@@ -1,11 +1,37 @@
 import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
+import { Jimp } from "jimp";
 import { adb, adbShell, adbRawBuffer } from "../adb.js";
 import { assertWriteAllowed, shellEscape, validateKeycode } from "./utils.js";
 
 // --- Schemas ---
 
 export const takeScreenshotSchema = z.object({
+  format: z
+    .enum(["png", "jpeg"])
+    .optional()
+    .default("png")
+    .describe(
+      "Output image format. 'jpeg' is typically ~10–20× smaller for screenshots (lossy). Default 'png' preserves the raw screencap output.",
+    ),
+  quality: z
+    .coerce
+    .number()
+    .int()
+    .min(1)
+    .max(100)
+    .optional()
+    .default(80)
+    .describe("JPEG quality 1–100 (default 80). Ignored when format='png'."),
+  maxWidth: z
+    .coerce
+    .number()
+    .int()
+    .positive()
+    .optional()
+    .describe(
+      "Optional cap on output width in pixels. Downscales preserving aspect ratio. No-op if the image is already narrower.",
+    ),
   serial: z
     .string()
     .optional()
@@ -168,9 +194,47 @@ export async function takeScreenshot(
 ) {
   const opts = params.serial ? { serial: params.serial } : undefined;
   const buffer = await adbRawBuffer(["exec-out", "screencap", "-p"], opts);
+
+  // Fast path: caller wants the raw PNG with no resize → skip jimp entirely.
+  // screencap -p already emits a valid PNG.
+  const needsTransform =
+    params.format === "jpeg" ||
+    (params.maxWidth !== undefined && params.maxWidth > 0);
+  if (!needsTransform) {
+    return {
+      base64: buffer.toString("base64"),
+      mimeType: "image/png",
+    };
+  }
+
+  const image = await Jimp.read(buffer);
+  const originalWidth = image.bitmap.width;
+  const originalHeight = image.bitmap.height;
+
+  if (params.maxWidth !== undefined && image.bitmap.width > params.maxWidth) {
+    image.resize({ w: params.maxWidth });
+  }
+
+  if (params.format === "jpeg") {
+    const out = await image.getBuffer("image/jpeg", { quality: params.quality });
+    return {
+      base64: out.toString("base64"),
+      mimeType: "image/jpeg",
+      width: image.bitmap.width,
+      height: image.bitmap.height,
+      originalWidth,
+      originalHeight,
+    };
+  }
+
+  const out = await image.getBuffer("image/png");
   return {
-    base64: buffer.toString("base64"),
+    base64: out.toString("base64"),
     mimeType: "image/png",
+    width: image.bitmap.width,
+    height: image.bitmap.height,
+    originalWidth,
+    originalHeight,
   };
 }
 
