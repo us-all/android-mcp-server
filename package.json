@@ -1,6 +1,6 @@
 {
   "name": "@us-all/android-mcp",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "mcpName": "io.github.us-all/android",
   "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
   "type": "module",
@@ -40,7 +40,7 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.29.0",
-    "@us-all/mcp-toolkit": "^1.2.3",
+    "@us-all/mcp-toolkit": "^1.2.5",
     "dotenv": "^17.4.2",
     "fast-xml-parser": "^5.7.0",
     "jimp": "^1.6.1",
