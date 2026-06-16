@@ -20,8 +20,8 @@ importers:
         specifier: ^1.29.0
         version: 1.29.0(zod@4.4.2)
       '@us-all/mcp-toolkit':
-        specifier: ^1.2.3
-        version: 1.2.3(@modelcontextprotocol/sdk@1.29.0(zod@4.4.2))(zod@4.4.2)
+        specifier: ^1.2.4
+        version: 1.2.4(@modelcontextprotocol/sdk@1.29.0(zod@4.4.2))(zod@4.4.2)
       dotenv:
         specifier: ^17.4.2
         version: 17.4.2
@@ -328,8 +328,8 @@ packages:
   '@types/node@22.19.17':
     resolution: {integrity: sha512-wGdMcf+vPYM6jikpS/qhg6WiqSV/OhG+jeeHT/KlVqxYfD40iYJf9/AE1uQxVWFvU7MipKRkRv8NSHiCGgPr8Q==}
 
-  '@us-all/mcp-toolkit@1.2.3':
-    resolution: {integrity: sha512-wHmK3oiavcE7pcbTsGlv95Ukvyc2ZQwi8MnMRplUuyL3kqrluCMZyt468OPIsryNnL1b4utTbjG1/XAkgYwqdQ==}
+  '@us-all/mcp-toolkit@1.2.4':
+    resolution: {integrity: sha512-GHmFqsHCbHSJMwgamagKVT4NLnvcbSj0C5r6emN5j2PDb2hnm0JZ0PioU9QfVc1MwXkdwcAh4WUx0rByfvNv6g==}
     engines: {node: '>=22.0.0'}
     peerDependencies:
       '@modelcontextprotocol/sdk': ^1.27.0 || ^1.28.0 || ^1.29.0
@@ -1476,7 +1476,7 @@ snapshots:
     dependencies:
       undici-types: 6.21.0
 
-  '@us-all/mcp-toolkit@1.2.3(@modelcontextprotocol/sdk@1.29.0(zod@4.4.2))(zod@4.4.2)':
+  '@us-all/mcp-toolkit@1.2.4(@modelcontextprotocol/sdk@1.29.0(zod@4.4.2))(zod@4.4.2)':
     dependencies:
       '@modelcontextprotocol/sdk': 1.29.0(zod@4.4.2)
       zod: 4.4.2
