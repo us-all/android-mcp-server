@@ -34,3 +34,20 @@ jobs:
         run: pnpm run token-stats
         env:
           TOKEN_BUDGET: 11000
+
+  # sharp ships per-platform prebuilt binaries; the Docker image is Alpine (musl).
+  # This job verifies the musl variant resolves from --frozen-lockfile and libvips
+  # loads, then runs the screenshot tests on musl — the same env the Dockerfile uses.
+  sharp-musl-smoke:
+    runs-on: ubuntu-latest
+    container: node:22-alpine
+    steps:
+      - run: apk add --no-cache git
+      - uses: actions/checkout@v5
+      - run: corepack enable
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm run build
+      - name: Verify sharp loads on Alpine musl
+        run: node -e "const s=require('sharp'); console.log('sharp', s.versions.sharp, 'libvips', s.versions.vips)"
+      - name: Screenshot pipeline tests (musl)
+        run: pnpm test screenshot

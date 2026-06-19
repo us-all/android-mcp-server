@@ -75,6 +75,7 @@ pnpm token-stats        # tools/list 토큰 측정
 
 ## 최근 변경사항
 
+- **v1.15.0** (2026-06-19): `take-screenshot` 이미지 변환 백엔드를 **jimp → sharp(0.35.1, libvips 8.18)** 교체. JPEG/PNG 인코딩·resize가 libvips 네이티브로 수행되어 더 빠르고 압축률이 좋음(스크린샷 base64 payload 절감). 도구 스키마·동작 동일(`format`/`quality`/`maxWidth`, png+no-resize fast-path 보존, `withoutEnlargement`로 no-upscale 유지). `jimp` dep 제거. **네이티브 dep 관리**: `pnpm.supportedArchitectures`(linux/darwin × x64/arm64 × glibc/musl)로 lockfile에 전 플랫폼 prebuilt 바이너리 기록 → Docker(`node:22-alpine`, musl) `--frozen-lockfile` 빌드가 `@img/sharp-linuxmusl-x64` 해석 가능. CI에 **`sharp-musl-smoke` 잡 추가**(Alpine 컨테이너에서 sharp 로드 + 스크린샷 테스트) — 발행 전 musl 검증 게이트. 94/94 test (darwin-arm64 로컬 검증, musl은 CI). 라이브 디바이스 미연결로 실 screencap 검증은 보류(transform 경로는 fixture PNG로 커버).
 - **v1.13.5** (2026-05-17): 보안 — `pnpm.overrides`에 `fast-xml-builder ^1.1.7` 추가 (GHSA-5wm8-gmm8-39j9, high/CVSS 6.1: attribute injection bypass via quote characters). `fast-xml-parser ^5.7.x`의 transitive. 5/15 wave 미커버 신규 alert로 직접 패치. 코드 변경 0줄, 90/90 test.
 - **v1.13.4** (2026-05-15): 보안 — `pnpm.overrides`에 fast-uri ^3.1.2 / hono ^4.12.18 / ip-address ^10.1.1 추가 (CVE-2026 transitive). 기존 vite/@hono/node-server overrides 보존. toolkit ^1.2.2 → ^1.2.3.
 - **v1.13.3** (2026-05-15): `@us-all/mcp-toolkit ^1.2.2` 핀 업데이트 — 자동 cascade. 코드 변경 0줄.
