@@ -1,5 +1,5 @@
 /**
- * takeScreenshot — format/quality/maxWidth pipeline (v1.14.0, sharp since v1.15.0).
+ * takeScreenshot — format/quality/maxWidth pipeline (v1.14.0, sharp since v1.14.3).
  *
  * The default code path returns the raw screencap PNG unchanged. We only
  * touch sharp when the caller asks for JPEG or downscaling — so the test
