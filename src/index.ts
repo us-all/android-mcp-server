@@ -5,6 +5,7 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { startMcpServer } from "@us-all/mcp-toolkit/runtime";
+import { inferToolAnnotations } from "@us-all/mcp-toolkit";
 import { validateConfig } from "./config.js";
 import { wrapToolHandler, wrapImageToolHandler } from "./tools/utils.js";
 
@@ -213,10 +214,10 @@ const server = new McpServer({
 let currentCategory: Category = "device";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function tool(name: string, description: string, schema: any, handler: any): void {
+function tool(name: string, description: string, schema: any, handler: any, annotations?: any): void {
   registry.register(name, description, currentCategory);
   if (registry.isEnabled(currentCategory)) {
-    server.tool(name, description, schema, handler);
+    server.tool(name, description, schema, inferToolAnnotations(name, annotations), handler);
   }
 }
 
