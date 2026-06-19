@@ -1,6 +1,6 @@
 {
   "name": "@us-all/android-mcp",
-  "version": "1.14.2",
+  "version": "1.14.3",
   "mcpName": "io.github.us-all/android",
   "description": "Android MCP server - ADB-based device management, UI automation, logcat, emulator control, and more",
   "type": "module",
@@ -25,7 +25,27 @@
       "fast-uri": "^3.1.2",
       "ip-address": "^10.1.1",
       "fast-xml-builder": "^1.1.7"
-    }
+    },
+    "supportedArchitectures": {
+      "os": [
+        "current",
+        "linux",
+        "darwin"
+      ],
+      "cpu": [
+        "current",
+        "x64",
+        "arm64"
+      ],
+      "libc": [
+        "current",
+        "glibc",
+        "musl"
+      ]
+    },
+    "onlyBuiltDependencies": [
+      "sharp"
+    ]
   },
   "scripts": {
     "build": "tsc && node -e \"require('fs').cpSync('src/ui','dist/ui',{recursive:true})\"",
@@ -43,7 +63,7 @@
     "@us-all/mcp-toolkit": "^1.2.3",
     "dotenv": "^17.4.2",
     "fast-xml-parser": "^5.7.0",
-    "jimp": "^1.6.1",
+    "sharp": "^0.35.1",
     "zod": "^4.4.2"
   },
   "devDependencies": {

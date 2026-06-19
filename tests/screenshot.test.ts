@@ -1,13 +1,13 @@
 /**
- * takeScreenshot — format/quality/maxWidth pipeline (v1.14.0).
+ * takeScreenshot — format/quality/maxWidth pipeline (v1.14.0, sharp since v1.14.3).
  *
  * The default code path returns the raw screencap PNG unchanged. We only
- * touch jimp when the caller asks for JPEG or downscaling — so the test
+ * touch sharp when the caller asks for JPEG or downscaling — so the test
  * pins (a) the fast-path passthrough, (b) the JPEG conversion shrinks
  * payload while changing mimeType, and (c) maxWidth actually resizes.
  */
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { Jimp } from "jimp";
+import sharp from "sharp";
 
 const mockAdbRawBuffer = vi.fn();
 vi.mock("../src/adb.js", async () => {
@@ -18,8 +18,31 @@ vi.mock("../src/adb.js", async () => {
 const { takeScreenshot } = await import("../src/tools/ui.js");
 
 async function makePngBuffer(width: number, height: number): Promise<Buffer> {
-  const img = new Jimp({ width, height, color: 0xff0000ff });
-  return img.getBuffer("image/png");
+  return sharp({
+    create: {
+      width,
+      height,
+      channels: 3,
+      background: { r: 255, g: 0, b: 0 },
+    },
+  })
+    .png()
+    .toBuffer();
+}
+
+// A high-entropy PNG so it does NOT compress to near-nothing — lets us assert
+// that JPEG output is genuinely smaller than the source PNG.
+async function makeNoisyPngBuffer(width: number, height: number): Promise<Buffer> {
+  const raw = Buffer.alloc(width * height * 3);
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const i = (y * width + x) * 3;
+      raw[i] = (x * 7) & 0xff;
+      raw[i + 1] = (y * 11) & 0xff;
+      raw[i + 2] = ((x + y) * 3) & 0xff;
+    }
+  }
+  return sharp(raw, { raw: { width, height, channels: 3 } }).png().toBuffer();
 }
 
 beforeEach(() => {
@@ -36,24 +59,14 @@ describe("takeScreenshot fast path (no transform requested)", () => {
     expect(result.mimeType).toBe("image/png");
     expect(result.base64).toBe(buf.toString("base64"));
     // Fast path does NOT decode + re-encode, so no width/height in the
-    // payload — those only appear when jimp ran.
+    // payload — those only appear when sharp ran.
     expect((result as Record<string, unknown>).width).toBeUndefined();
   });
 });
 
 describe("takeScreenshot JPEG conversion", () => {
   it("returns image/jpeg with width/height and a much smaller payload", async () => {
-    // Solid-color PNG compresses tiny; use a noisy buffer so PNG > JPEG.
-    const img = new Jimp({ width: 400, height: 400, color: 0x00000000 });
-    for (let y = 0; y < 400; y += 1) {
-      for (let x = 0; x < 400; x += 1) {
-        const r = (x * 7) & 0xff;
-        const g = (y * 11) & 0xff;
-        const b = ((x + y) * 3) & 0xff;
-        img.setPixelColor(((r << 24) | (g << 16) | (b << 8) | 0xff) >>> 0, x, y);
-      }
-    }
-    const noisy = await img.getBuffer("image/png");
+    const noisy = await makeNoisyPngBuffer(400, 400);
     mockAdbRawBuffer.mockResolvedValueOnce(noisy);
 
     const result = await takeScreenshot({ format: "jpeg", quality: 60 });

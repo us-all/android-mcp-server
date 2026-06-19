@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { XMLParser } from "fast-xml-parser";
-import { Jimp } from "jimp";
+import sharp from "sharp";
 import { adb, adbShell, adbRawBuffer } from "../adb.js";
 import { assertWriteAllowed, shellEscape, validateKeycode } from "./utils.js";
 
@@ -195,7 +195,7 @@ export async function takeScreenshot(
   const opts = params.serial ? { serial: params.serial } : undefined;
   const buffer = await adbRawBuffer(["exec-out", "screencap", "-p"], opts);
 
-  // Fast path: caller wants the raw PNG with no resize → skip jimp entirely.
+  // Fast path: caller wants the raw PNG with no resize → skip sharp entirely.
   // screencap -p already emits a valid PNG.
   const needsTransform =
     params.format === "jpeg" ||
@@ -207,32 +207,40 @@ export async function takeScreenshot(
     };
   }
 
-  const image = await Jimp.read(buffer);
-  const originalWidth = image.bitmap.width;
-  const originalHeight = image.bitmap.height;
+  const input = sharp(buffer);
+  const meta = await input.metadata();
+  const originalWidth = meta.width;
+  const originalHeight = meta.height;
 
-  if (params.maxWidth !== undefined && image.bitmap.width > params.maxWidth) {
-    image.resize({ w: params.maxWidth });
+  // `withoutEnlargement` makes this a no-op when the image is already narrower,
+  // matching the prior "never upscale" behavior.
+  let pipeline = input;
+  if (params.maxWidth !== undefined) {
+    pipeline = pipeline.resize({ width: params.maxWidth, withoutEnlargement: true });
   }
 
   if (params.format === "jpeg") {
-    const out = await image.getBuffer("image/jpeg", { quality: params.quality });
+    const { data, info } = await pipeline
+      .jpeg({ quality: params.quality })
+      .toBuffer({ resolveWithObject: true });
     return {
-      base64: out.toString("base64"),
+      base64: data.toString("base64"),
       mimeType: "image/jpeg",
-      width: image.bitmap.width,
-      height: image.bitmap.height,
+      width: info.width,
+      height: info.height,
       originalWidth,
       originalHeight,
     };
   }
 
-  const out = await image.getBuffer("image/png");
+  const { data, info } = await pipeline
+    .png()
+    .toBuffer({ resolveWithObject: true });
   return {
-    base64: out.toString("base64"),
+    base64: data.toString("base64"),
     mimeType: "image/png",
-    width: image.bitmap.width,
-    height: image.bitmap.height,
+    width: info.width,
+    height: info.height,
     originalWidth,
     originalHeight,
   };
